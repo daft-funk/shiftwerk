@@ -17,28 +17,32 @@ Once the project moves into development, the press release can be used as a touc
  -->
  
 ## Heading ##
-  > Name the product in a way the reader (i.e. your target customers) will understand.
+shiftWerk
 
 ## Sub-Heading ##
-  > Describe who the market for the product is and what benefit they get. One sentence only underneath the title.
+  This product connects service industry workers with opportunities to make more money.
 
 ## Summary ##
-  > Give a summary of the product and the benefit. Assume the reader will not read anything else so make this paragraph good.
+  Have you ever been short on cash? Have you ever been short on staff? ShiftWerk is designed to connect a werker with the opportunity to pick up a shift and earn that last hundred dollars for rent or an amazing night out. It allows an employer or party host to staff events with the best service industry werkers there are. Wether it be a month in advance or an hour shiftWerk can connect you with quality werkers who are qualified to get the job done. 
+
 
 ## Problem ##
-  > Describe the problem your product solves.
+  As a worker in the service industry, income was always a concern. Since tips are unpredictable and hours were limited to less than 40 hours, I would sometimes find myself short on cash but with an abundance of time. The
+
+  As an employer in the service or a part host, finding and maintaining a full staff can be a hassle. Workers call in an hour before a shift because of a 'hair emergency' or just not show up at all. 
 
 ## Solution ##
-  > Describe how your product elegantly solves the problem.
+  ShiftWerk provides the opportunity to just pick up a shift or two without fully committing to another job.
+  ShiftWerk connects willing workers to employers and hosts who need staff. 
 
 ## Quote from You ##
-  > A quote from a spokesperson in your company.
+  ShiftWerk sets the industry standard for finding reliable workers and jobs. 
 
 ## How to Get Started ##
-  > Describe how easy it is to get started.
+  Getting started is easy! Create a profile on shiftWerk and browse jobs pertaining to your line of work. Apply with the click of a button and an employer will get back to you. If you are in need of werkers, post a job or reach out to our top rated werkers. 
 
 ## Customer Quote ##
-  > Provide a quote from a hypothetical customer that describes how they experienced the benefit.
+'When I first moved to New Orleans, I had trouble finding a job. ShiftWerk helped me find a job that eventually led to a permanent position. Without shiftWerk, I probably would have moved back home. Thank you shiftWerk!'
 
 ## Closing and Call to Action ##
-  > Wrap it up and give pointers where the reader should go next.
+You can find shiftWerk in your app store. We are available on Andriod and iOS. 
