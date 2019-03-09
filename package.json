@@ -1,0 +1,26 @@
+{
+  "name": "shiftwerk",
+  "version": "1.0.0",
+  "description": "shift planning for werkers and makers",
+  "main": "server/server.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/daft-funk/shiftwerk.git"
+  },
+  "author": "daft-funk",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/daft-funk/shiftwerk/issues"
+  },
+  "homepage": "https://github.com/daft-funk/shiftwerk#readme",
+  "devDependencies": {
+    "@babel/core": "^7.3.4",
+    "@babel/preset-env": "^7.3.4",
+    "@babel/preset-typescript": "^7.3.3",
+    "babel-jest": "^24.3.1",
+    "jest": "^24.3.1"
+  }
+}
