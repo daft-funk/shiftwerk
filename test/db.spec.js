@@ -1,4 +1,3 @@
-const jest = require('jest');
 const SequelizeMock = require('sequelize-mock');
 
 const sequelize = new SequelizeMock();
@@ -7,6 +6,36 @@ const Certification = require('../db/Certification')(sequelize);
 const Shift = require('../db/Shift')(sequelize);
 const Position = require('../db/Position')(sequelize);
 const PaymentType = require('../db/PaymentType')(sequelize);
+
+/*
+ * testInstanceProps
+ * takes a sequelize model instance and tests for the existence of each expected property
+ * @params
+ *  modelProps: Object
+ *  modelInstance: Sequelize.model instance
+ * @return undefined
+ */
+
+const testInstanceProps = (modelProps, modelInstance) => {
+  Object.keys(modelProps).forEach(prop => {
+    test(`should have property ${prop}`, async () => {
+      expect(modelInstance).toHaveProperty(prop, modelProps[prop]);
+    });
+  });
+};
+
+/*
+ * testInstanceMethod
+ * ensures proper operation of a sequelize model's custom methods
+ * @params
+ *  options: Object
+ *    expectedMethodsCalled: Array[String]
+ *    
+ */
+
+const testInstanceMethod = (options, modelInstance) => {
+
+}
 
 describe('Werker', () => {
   const exampleWorker = {
@@ -24,9 +53,5 @@ describe('Werker', () => {
   before(async () => {
     barry = await Werker.create(exampleWorker);
   });
-  Object.keys(exampleWorker).forEach(prop => {
-    test(`should have property ${prop}`, async () => {
-      expect(barry).toHaveProperty(prop, exampleWorker[prop]);
-    });
-  });
+  testInstanceProps(exampleWorker, barry);
 });
