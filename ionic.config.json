@@ -1,0 +1,7 @@
+{
+  "name": "shiftwerk",
+  "integrations": {
+    "cordova": {}
+  },
+  "type": "angular"
+}
