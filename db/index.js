@@ -1,5 +1,5 @@
 // HAVE NOT TESTED - ONCE VM INSTANCE RUNNING, CONNECT TO DB 
-// SET PORT, UPDATE .ENV, AND TEST 
+// SET PORT, UPDATE .ENV, AND TEST - frank
 const postgres = require('postgres');
 
 const connection = postgres.createConnection({
