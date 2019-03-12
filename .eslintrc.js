@@ -4,6 +4,11 @@ module.exports = {
         "describe": "readonly",
         "test": "readonly",
         "expect": "readonly",
-        "before": "readonly",
+        "beforeAll": "readonly",
+        "jest": "readonly",
+        "beforeEach": "readonly",
+        "afterEach": "readonly",
+        "afterAll": "readonly",
+        "xdescribe": "readonly",
     },
 };
