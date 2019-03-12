@@ -4,10 +4,10 @@
   "description": "shift planning for werkers and makers",
   "main": "server/server.js",
   "scripts": {
-    "start": "node server/server.js",
+    "start": "nodemon server/server.js",
     "test": "jest test/* && ng test",
     "server-prod": "ng build && node server/server.js",
-    "server-dev": "ng build --watch && nodemon server/server.js"
+    "build-dev": "ng build --watch"
   },
   "repository": {
     "type": "git",
@@ -44,6 +44,7 @@
     "jasmine-core": "~2.99.1",
     "jasmine-spec-reporter": "~4.2.1",
     "jest": "^24.3.1",
+    "nodemon": "^1.18.10",
     "protractor": "~5.4.0",
     "sequelize-mock": "^0.10.2",
     "sequelize-test-helpers": "^1.0.10",
