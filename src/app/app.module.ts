@@ -25,6 +25,7 @@ import { ShiftDetailsComponent } from './user/shift-details/shift-details.compon
 import { HistoryComponent } from './user/history/history.component';
 import { PendingshiftsComponent } from './user/pendingshifts/pendingshifts.component';
 import { NotificationsComponent } from './user/notifications/notifications.component';
+import { ScheduleComponent } from './user/schedule/schedule.component';
 
 @NgModule({
   declarations: [
@@ -51,6 +52,7 @@ import { NotificationsComponent } from './user/notifications/notifications.compo
     HistoryComponent,
     PendingshiftsComponent,
     NotificationsComponent,
+    ScheduleComponent,
   ],
   imports: [
     BrowserModule,
