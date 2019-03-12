@@ -15,6 +15,7 @@ import { MakerHomeComponent } from './maker/maker-home/maker-home.component';
 import { MakerSearchComponent } from './maker/maker-search/maker-search.component';
 import { MakerNotificationComponent } from './maker/maker-notification/maker-notification.component';
 import { MakerProfileComponent } from './maker/maker-profile/maker-profile.component';
+import { MakerSettingsComponent } from './maker/maker-settings/maker-settings.component';
 
 @NgModule({
   declarations: [
@@ -31,6 +32,7 @@ import { MakerProfileComponent } from './maker/maker-profile/maker-profile.compo
     MakerSearchComponent,
     MakerNotificationComponent,
     MakerProfileComponent,
+    MakerSettingsComponent,
   ],
   imports: [
     BrowserModule,
