@@ -24,6 +24,7 @@ import { UserNavbarComponent } from './user/user-navbar/user-navbar.component';
 import { ShiftDetailsComponent } from './user/shift-details/shift-details.component';
 import { HistoryComponent } from './user/history/history.component';
 import { PendingshiftsComponent } from './user/pendingshifts/pendingshifts.component';
+import { NotificationsComponent } from './user/notifications/notifications.component';
 
 @NgModule({
   declarations: [
@@ -49,6 +50,7 @@ import { PendingshiftsComponent } from './user/pendingshifts/pendingshifts.compo
     ShiftDetailsComponent,
     HistoryComponent,
     PendingshiftsComponent,
+    NotificationsComponent,
   ],
   imports: [
     BrowserModule,
