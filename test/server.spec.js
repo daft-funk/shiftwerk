@@ -1,5 +1,5 @@
 const request = require('supertest');
-const server = require('../server');
+const server = require('../server/server');
 
 describe('homepage', () => {
   it('Should respond to the GET method', () => {
@@ -120,6 +120,7 @@ describe('getting notifications', () => {
     .get('/notifications')
     .then((response), () => {
       expect(response.type).toBe(/json/)
+      expect(response.body).toBe('array')
     })
   })
 })
@@ -211,7 +212,32 @@ describe('upcoming schedule', () => {
       expect(response.statusCode).toBe(200)
     })
   })
-  test('Should')
+  test('Should return a list of upcoming shifts', () => {
+    return request(server)
+    .get('/shifts/upcoming')
+    .then((response), () => {
+      expect(response.type).toBe(/json/)
+      expect(response.body).toBe('array')
+    })
+  })
+})
+
+describe('search for werkers', () => {
+  test('Should respond to a GET request', () => {
+    return request(server)
+    .get('/werkers/:shiftId?[terms]=[values]')
+    .then((response), () => {
+      expect(response.statusCode).toBe(200)
+    })
+  })
+  test('Should return a list of werkers', () => {
+    expect(response.type).toBe(/json/)
+    expect(response.body).toBe('array')
+    expect(response.body[0]).toHaveProperty('name_first')
+    expect(response.body[0]).toHaveProperty('name_last')
+    expect(response.body[0]).toHaveProperty('email')
+    expect(response.body[0]).toHaveProperty('bio')
+  })
 })
 /*
     test('A werker should be able to apply for a shift', () => {
