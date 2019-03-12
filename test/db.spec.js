@@ -1,19 +1,20 @@
 const SequelizeMock = require('sequelize-mock');
 
 const sequelize = new SequelizeMock();
+
 const Werker = require('../db/Werker')(sequelize, SequelizeMock); // ugly hack to get DataTypes
-// const Certification = require('../db/Certification')(sequelize, SequelizeMock);
-// const WerkerCertification = require('../db/WerkerCertification')(sequelize, SequelizeMock);
-// const Shift = require('../db/Shift')(sequelize, SequelizeMock);
-// const WerkerShift = require('../db/WerkerShift')(sequelize, SequelizeMock);
-// const Position = require('../db/Position')(sequelize, SequelizeMock);
-// const ShiftPosition = require('../db/ShiftPosition')(sequelize, SequelizeMock);
-// const WerkerPosition = require('../db/WerkerPosition')(sequelize, SequelizeMock);
-// const PaymentType = require('../db/PaymentType')(sequelize, SequelizeMock);
-// const ShiftPaymentType = require('../db/ShiftPaymentType')(sequelize, SequelizeMock);
-// const Rating = require('../db/Rating')(sequelize, SequelizeMock);
-// const Favorite = require('../db/Favorite')(sequelize, SequelizeMock);
-// const InviteApply = require('../db/InviteApply')(sequelize, SequelizeMock);
+const Certification = require('../db/Certification')(sequelize, SequelizeMock);
+const WerkerCertification = require('../db/WerkerCertification')(sequelize, SequelizeMock);
+const Shift = require('../db/Shift')(sequelize, SequelizeMock);
+const WerkerShift = require('../db/WerkerShift')(sequelize, SequelizeMock);
+const Position = require('../db/Position')(sequelize, SequelizeMock);
+const ShiftPosition = require('../db/ShiftPosition')(sequelize, SequelizeMock);
+const WerkerPosition = require('../db/WerkerPosition')(sequelize, SequelizeMock);
+const PaymentType = require('../db/PaymentType')(sequelize, SequelizeMock);
+const ShiftPaymentType = require('../db/ShiftPaymentType')(sequelize, SequelizeMock);
+const Rating = require('../db/Rating')(sequelize, SequelizeMock);
+const Favorite = require('../db/Favorite')(sequelize, SequelizeMock);
+const InviteApply = require('../db/InviteApply')(sequelize, SequelizeMock);
 
 const exampleWorker = {
   nameFirst: 'user',
@@ -60,7 +61,6 @@ const examplePaymentType = {
 describe('Werker', () => {
   let werker;
   beforeAll(async () => {
-    jest.spyOn(Werker.belongsToMany);
     const newWerker = await Werker.create(exampleWorker);
     werker = newWerker;
     return werker;
@@ -74,7 +74,7 @@ describe('Werker', () => {
     });
   });
 
-  xdescribe('instance methods', () => {
+  describe.skip('instance methods', () => {
     [
       'getFullName',
       'setAverageRating',
@@ -117,7 +117,7 @@ describe('Werker', () => {
       });
     });
   });
-  xdescribe('associations', () => {
+  describe.skip('associations', () => {
     [
       [Certification, { through: WerkerCertification }],
       [Shift, { through: Rating }],
@@ -129,6 +129,96 @@ describe('Werker', () => {
       test(`should have a belongsToMany association with ${association[0]} through ${association[1].through}`, () => {
         expect(Werker.belongsToMany).toHaveBeenCalledWith(...association);
       });
+    });
+  });
+});
+
+describe.skip('Maker', () => {
+  let maker;
+  beforeAll(async () => {
+    const newMaker = await Maker.create(exampleMaker);
+    maker = newMaker;
+    return maker;
+  });
+  describe('props', () => {
+    Object.keys(exampleMaker).forEach((prop) => {
+      test(`should have property ${prop}`, async () => {
+        expect(maker).toHaveProperty(prop, exampleMaker[prop]);
+      });
+    });
+  });
+
+  describe.skip('instance methods', () => {
+    describe('setAverageRating', () => {
+      // relies on Rating model existing
+      beforeAll(async () => {
+        jest.spyOn(Rating.sum);
+        await maker.setAverageRating();
+      });
+
+      afterAll(() => {
+        Rating.sum.mockReset();
+      });
+
+      test('should sum all of maker\'s ratings', () => {
+        expect(Rating.sum).toHaveBeenCalledWith('rating', {
+          where: { makerId: maker.id },
+        });
+      });
+
+      test('for a maker with no ratings, should not set rating', () => {
+        expect(maker.ratings).toBeNull();
+      });
+
+      test('for a maker with ratings, should calculate the average rating, setting the netRating prop on the maker', async () => {
+        await Promise.all([4, 5, 5, 3]
+          .map(rating => Rating.create({ makerId: maker.id, shiftId: 0, rating })));
+        await maker.setAverageRating();
+        expect(maker.rating).toBe(3.75);
+      });
+    });
+  });
+
+  describe.skip('associations', () => {
+    test('should have a belongsToMany association with Werker through Favorites', () => {
+      expect(Maker.belongsToMany).toHaveBeenCalledWith(Werker, { through: Favorites });
+    });
+    test('should have a hasMany association with Shift', () => {
+      expect(Maker.hasMany).toHaveBeenCalledWith(Shift);
+    });
+  });
+});
+
+describe.skip('Shift', () => {
+  let shift;
+  beforeAll(async () => {
+    const newShift = await Shift.create(exampleShift);
+    shift = newShift;
+    return shift;
+  });
+
+  describe('props', () => {
+    Object.keys(exampleShift).forEach((prop) => {
+      test(`should have property ${prop}`, async () => {
+        expect(shift).toHaveProperty(prop, exampleShift[prop]);
+      });
+    });
+  });
+
+  describe.skip('associations', () => {
+    [
+      [Werker, { through: Rating }],
+      [PaymentType, { through: ShiftPaymentType }],
+      [Werker, { through: WerkerShift }],
+      [Position, { through: ShiftPosition }],
+      [Werker, { through: InviteApply }],
+    ].forEach((association) => {
+      test(`should have a belongsToMany association with ${association[0]} through ${association[1].through}`, () => {
+        expect(Shift.belongsToMany).toHaveBeenCalledWith(...association);
+      });
+    });
+    test('should have a hasOne relationship with Maker', () => {
+      expect(Shift.hasOne).toHaveBeenCalledWith(Maker);
     });
   });
 });
