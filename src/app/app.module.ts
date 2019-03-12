@@ -10,6 +10,7 @@ import { WerkerProfileComponent } from './werker/werker-profile/werker-profile.c
 import { WerkerSettingsComponent } from './werker/werker-settings/werker-settings.component';
 import { WerkerHistoryComponent } from './werker/werker-history/werker-history.component';
 import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedule.component';
+import { MakerScheduleComponent } from './maker/maker-schedule/maker-schedule.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +22,7 @@ import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedul
     WerkerSettingsComponent,
     WerkerHistoryComponent,
     WerkerScheduleComponent,
+    MakerScheduleComponent,
   ],
   imports: [
     BrowserModule,
