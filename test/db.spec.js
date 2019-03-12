@@ -226,7 +226,16 @@ describe.skip('Shift', () => {
   });
 });
 
-[Certification, Position, PaymentType].forEach((model) => {
+[
+  Certification,
+  Position,
+  PaymentType,
+  WerkerCertification,
+  Rating,
+  ShiftPosition,
+  Favorite,
+  InviteApply,
+].forEach((model) => {
   describe.skip(`${model}`, () => {
     let instance;
     beforeAll(async () => {
