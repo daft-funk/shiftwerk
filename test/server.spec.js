@@ -170,6 +170,7 @@ describe('history', () => {
     .then((response), () => {
       expect(response.type).toBe(/json/)
       expect(response.body).toBe('array')
+      expect(response.body[0].name).toBe('string')
     })
   })
 })
@@ -222,7 +223,7 @@ describe('upcoming schedule', () => {
   })
 })
 
-describe('search for werkers', () => {
+describe('search for werkers by term', () => {
   test('Should respond to a GET request', () => {
     return request(server)
     .get('/werkers/:shiftId?[terms]=[values]')
@@ -231,12 +232,75 @@ describe('search for werkers', () => {
     })
   })
   test('Should return a list of werkers', () => {
-    expect(response.type).toBe(/json/)
-    expect(response.body).toBe('array')
-    expect(response.body[0]).toHaveProperty('name_first')
-    expect(response.body[0]).toHaveProperty('name_last')
-    expect(response.body[0]).toHaveProperty('email')
-    expect(response.body[0]).toHaveProperty('bio')
+    return request(server)
+    .get('/werkers/:shiftId?[terms]=[values]')
+    .then((response), () => {
+      expect(response.type).toBe(/json/)
+      expect(response.body).toBe('array')
+      expect(response.body[0]).toHaveProperty('name_first')
+      expect(response.body[0]).toHaveProperty('name_last')
+      expect(response.body[0]).toHaveProperty('email')
+      expect(response.body[0]).toHaveProperty('bio')
+    })
+  })
+})
+
+describe('search for werker details', () => {
+  test('Should respond to GET request', () => {
+    return request(server)
+    .get('/werkers/:werkerId')
+    .then((response), () => {
+      expect(response.statusCode).toBe(200)
+    })
+  })
+  test('Should return a werker profile', () => {
+    return request(server)
+    .get('/werkers/:werkerId')
+    .then((response), () => {
+      expect(response.type).toBe(/json/)
+      expect(response.body).toBe('object')
+      expect(response.body).toHaveProperty('name_first')
+      expect(response.body).toHaveProperty('name_last')
+      expect(response.body).toHaveProperty('email')
+      expect(response.body).toHaveProperty('bio')
+      expect(response.body).toHaveProperty('URL_photo')
+    })
+  })
+})
+
+describe('inviting werkers', () => {
+  test('Should respond to PUT request', () => {
+    return request(server)
+    .put('/shifts/:shiftId/invite')
+    .then((response), () => {
+      expect(response.statusCode).toBe(201)
+    })
+  })
+})
+
+describe('creating shifts', () => {
+  test('Should respond to GET request', () => {
+    return request(server)
+    .get('/shifts')
+    .then((response), () => {
+      expect(response.statusCode).toBe(200)
+    })
+  })
+  test('Should create a shift', () => {
+    return request(server)
+    .get('/shifts')
+    .then((response), () => {
+      expect(response.type).toBe(/json/)
+      expect(response.body).toBe('object')
+      expect(response.body.name).toBe('string')
+      expect(response.body.address).toBe('string')
+      expect(response.body.description).toBe('string')
+      expect(response.body.longitude).toBe('string')
+      expect(response.body.latitude).toBe('string')
+      expect(response.body.duration).toBe('number')
+      expect(response.body.payment_amnt).toBe('number')
+      expect(response.body.time_date).toBe('date')
+    })
   })
 })
 /*
