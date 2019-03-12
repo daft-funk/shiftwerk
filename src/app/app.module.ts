@@ -17,6 +17,7 @@ import { MakerNotificationComponent } from './maker/maker-notification/maker-not
 import { MakerProfileComponent } from './maker/maker-profile/maker-profile.component';
 import { MakerSettingsComponent } from './maker/maker-settings/maker-settings.component';
 import { MakerHistoryComponent } from './maker/maker-history/maker-history.component';
+import { MakerUnfilledShiftsComponent } from './maker/maker-unfilled-shifts/maker-unfilled-shifts.component';
 
 @NgModule({
   declarations: [
@@ -35,6 +36,7 @@ import { MakerHistoryComponent } from './maker/maker-history/maker-history.compo
     MakerProfileComponent,
     MakerSettingsComponent,
     MakerHistoryComponent,
+    MakerUnfilledShiftsComponent,
   ],
   imports: [
     BrowserModule,
