@@ -21,6 +21,7 @@ import { MakerUnfilledShiftsComponent } from './maker/maker-unfilled-shifts/make
 import { MakerCreateShiftComponent } from './maker/maker-create-shift/maker-create-shift.component';
 import { MakerPositionsComponent } from './maker/maker-positions/maker-positions.component';
 import { UserNavbarComponent } from './user/user-navbar/user-navbar.component';
+import { ShiftDetailsComponent } from './user/shift-details/shift-details.component';
 
 @NgModule({
   declarations: [
@@ -43,6 +44,7 @@ import { UserNavbarComponent } from './user/user-navbar/user-navbar.component';
     MakerCreateShiftComponent,
     MakerPositionsComponent,
     UserNavbarComponent,
+    ShiftDetailsComponent,
   ],
   imports: [
     BrowserModule,
