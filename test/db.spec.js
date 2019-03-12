@@ -3,6 +3,7 @@ const SequelizeMock = require('sequelize-mock');
 const sequelize = new SequelizeMock();
 
 const Werker = require('../db/Werker')(sequelize, SequelizeMock); // ugly hack to get DataTypes
+const Maker = require('../db/Maker')(sequelize, SequelizeMock);
 const Certification = require('../db/Certification')(sequelize, SequelizeMock);
 const WerkerCertification = require('../db/WerkerCertification')(sequelize, SequelizeMock);
 const Shift = require('../db/Shift')(sequelize, SequelizeMock);
@@ -16,60 +17,62 @@ const Rating = require('../db/Rating')(sequelize, SequelizeMock);
 const Favorite = require('../db/Favorite')(sequelize, SequelizeMock);
 const InviteApply = require('../db/InviteApply')(sequelize, SequelizeMock);
 
-const exampleWorker = {
-  nameFirst: 'user',
-  nameLast: 'mcExample',
-  email: 'example@example.com',
-  urlPhoto: 'example.com/image',
-  bio: 'example bio',
-  phone: 5555555555,
-  lastMinute: true,
-  lat: 40.1,
-  long: 40.2,
-};
+const examples = {
+  Werker: {
+    nameFirst: 'user',
+    nameLast: 'mcExample',
+    email: 'example@example.com',
+    urlPhoto: 'example.com/image',
+    bio: 'example bio',
+    phone: 5555555555,
+    lastMinute: true,
+    lat: 40.1,
+    long: 40.2,
+  },
 
-const exampleMaker = {
-  name: 'jonny restaurant',
-  urlPhoto: 'example.com/image',
-  phone: 5555555555,
-  email: 'example@example.com',
-};
+  Maker: {
+    name: 'jonny restaurant',
+    urlPhoto: 'example.com/image',
+    phone: 5555555555,
+    email: 'example@example.com',
+  },
 
-const exampleShift = {
-  name: 'catering example',
-  timeDate: new Date(),
-  duration: 300,
-  address: '1234 example st',
-  lat: 40.2,
-  long: 40.1,
-  paymentAmount: 5,
-  description: 'example event',
-};
+  Shift: {
+    name: 'catering example',
+    timeDate: new Date(),
+    duration: 300,
+    address: '1234 example st',
+    lat: 40.2,
+    long: 40.1,
+    paymentAmount: 5,
+    description: 'example event',
+  },
 
-const exampleCertification = {
-  certName: 'safeserv',
-};
+  Certification: {
+    certName: 'safeserv',
+  },
 
-const examplePosition = {
-  position: 'example',
-};
+  Position: {
+    position: 'example',
+  },
 
-const examplePaymentType = {
-  paymentName: 'dead leaves',
+  PaymentType: {
+    paymentName: 'dead leaves',
+  },
 };
 
 describe('Werker', () => {
   let werker;
   beforeAll(async () => {
-    const newWerker = await Werker.create(exampleWorker);
+    const newWerker = await Werker.create(examples.Werker);
     werker = newWerker;
     return werker;
   });
 
   describe('props', () => {
-    Object.keys(exampleWorker).forEach((prop) => {
+    Object.keys(examples.Werker).forEach((prop) => {
       test(`should have property ${prop}`, async () => {
-        expect(werker).toHaveProperty(prop, exampleWorker[prop]);
+        expect(werker).toHaveProperty(prop, examples.Werker[prop]);
       });
     });
   });
@@ -136,14 +139,14 @@ describe('Werker', () => {
 describe.skip('Maker', () => {
   let maker;
   beforeAll(async () => {
-    const newMaker = await Maker.create(exampleMaker);
+    const newMaker = await Maker.create(examples.Maker);
     maker = newMaker;
     return maker;
   });
   describe('props', () => {
-    Object.keys(exampleMaker).forEach((prop) => {
+    Object.keys(examples.Maker).forEach((prop) => {
       test(`should have property ${prop}`, async () => {
-        expect(maker).toHaveProperty(prop, exampleMaker[prop]);
+        expect(maker).toHaveProperty(prop, examples.Maker[prop]);
       });
     });
   });
@@ -192,15 +195,15 @@ describe.skip('Maker', () => {
 describe.skip('Shift', () => {
   let shift;
   beforeAll(async () => {
-    const newShift = await Shift.create(exampleShift);
+    const newShift = await Shift.create(examples.Shift);
     shift = newShift;
     return shift;
   });
 
   describe('props', () => {
-    Object.keys(exampleShift).forEach((prop) => {
+    Object.keys(examples.Shift).forEach((prop) => {
       test(`should have property ${prop}`, async () => {
-        expect(shift).toHaveProperty(prop, exampleShift[prop]);
+        expect(shift).toHaveProperty(prop, examples.Shift[prop]);
       });
     });
   });
@@ -219,6 +222,25 @@ describe.skip('Shift', () => {
     });
     test('should have a hasOne relationship with Maker', () => {
       expect(Shift.hasOne).toHaveBeenCalledWith(Maker);
+    });
+  });
+});
+
+[Certification, Position, PaymentType].forEach((model) => {
+  describe.skip(`${model}`, () => {
+    let instance;
+    beforeAll(async () => {
+      const newInstance = await model.create(examples[model.name]); // idk if this works
+      instance = newInstance;
+      return instance;
+    });
+
+    describe('props', () => {
+      Object.keys(examples[model.name]).forEach((prop) => {
+        test(`should have property ${prop}`, async () => {
+          expect(instance).toHaveProperty(prop, examples[model.name][prop]);
+        });
+      });
     });
   });
 });
