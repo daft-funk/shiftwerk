@@ -60,6 +60,7 @@ const examplePaymentType = {
 describe('Werker', () => {
   let werker;
   beforeAll(async () => {
+    jest.spyOn(Werker.belongsToMany);
     const newWerker = await Werker.create(exampleWorker);
     werker = newWerker;
     return werker;
@@ -117,6 +118,17 @@ describe('Werker', () => {
     });
   });
   xdescribe('associations', () => {
-    
+    [
+      [Certification, { through: WerkerCertification }],
+      [Shift, { through: Rating }],
+      [Maker, { through: Favorite }],
+      [Shift, { through: WerkerShift }],
+      [Position, { through: WerkerPosition }],
+      [Shift, { through: InviteApply }],
+    ].forEach((association) => {
+      test(`should have a belongsToMany association with ${association[0]} through ${association[1].through}`, () => {
+        expect(Werker.belongsToMany).toHaveBeenCalledWith(...association);
+      });
+    });
   });
 });
