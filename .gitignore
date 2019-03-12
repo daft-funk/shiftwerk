@@ -61,6 +61,6 @@ typings/
 .next
 
 .vscode
-coverage
 __snapshots__
 dist
+coverage
