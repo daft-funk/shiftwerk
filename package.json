@@ -5,7 +5,9 @@
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",
-    "test": "jest test/* && ng test"
+    "test": "jest test/* && ng test",
+    "server-prod": "ng build && node server/server.js",
+    "server-dev": "ng build --watch && nodemon server/server.js"
   },
   "repository": {
     "type": "git",
