@@ -12,6 +12,7 @@ import { WerkerHistoryComponent } from './werker/werker-history/werker-history.c
 import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedule.component';
 import { MakerScheduleComponent } from './maker/maker-schedule/maker-schedule.component';
 import { MakerHomeComponent } from './maker/maker-home/maker-home.component';
+import { MakerSearchComponent } from './maker/maker-search/maker-search.component';
 
 @NgModule({
   declarations: [
@@ -25,6 +26,7 @@ import { MakerHomeComponent } from './maker/maker-home/maker-home.component';
     WerkerScheduleComponent,
     MakerScheduleComponent,
     MakerHomeComponent,
+    MakerSearchComponent,
   ],
   imports: [
     BrowserModule,
