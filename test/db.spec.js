@@ -14,20 +14,47 @@ const Werker = require('../db/Werker')(sequelize, SequelizeMock); // ugly hack t
 // const Rating = require('../db/Rating')(sequelize, SequelizeMock);
 // const Favorite = require('../db/Favorite')(sequelize, SequelizeMock);
 // const InviteApply = require('../db/InviteApply')(sequelize, SequelizeMock);
+
 const exampleWorker = {
-  name_first: 'user',
-  name_last: 'mcExample',
+  nameFirst: 'user',
+  nameLast: 'mcExample',
   email: 'example@example.com',
-  url_photo: 'example.com/image',
+  urlPhoto: 'example.com/image',
   bio: 'example bio',
   phone: 5555555555,
-  last_minute: true,
+  lastMinute: true,
   lat: 40.1,
   long: 40.2,
 };
 
 const exampleMaker = {
-  
+  name: 'jonny restaurant',
+  urlPhoto: 'example.com/image',
+  phone: 5555555555,
+  email: 'example@example.com',
+};
+
+const exampleShift = {
+  name: 'catering example',
+  timeDate: new Date(),
+  duration: 300,
+  address: '1234 example st',
+  lat: 40.2,
+  long: 40.1,
+  paymentAmount: 5,
+  description: 'example event',
+};
+
+const exampleCertification = {
+  certName: 'safeserv',
+};
+
+const examplePosition = {
+  position: 'example',
+};
+
+const examplePaymentType = {
+  paymentName: 'dead leaves',
 };
 
 describe('Werker', () => {
@@ -90,6 +117,6 @@ describe('Werker', () => {
     });
   });
   xdescribe('associations', () => {
-
+    
   });
 });
