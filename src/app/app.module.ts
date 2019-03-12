@@ -22,6 +22,8 @@ import { MakerCreateShiftComponent } from './maker/maker-create-shift/maker-crea
 import { MakerPositionsComponent } from './maker/maker-positions/maker-positions.component';
 import { UserNavbarComponent } from './user/user-navbar/user-navbar.component';
 import { ShiftDetailsComponent } from './user/shift-details/shift-details.component';
+import { HistoryComponent } from './user/history/history.component';
+import { PendingshiftsComponent } from './user/pendingshifts/pendingshifts.component';
 
 @NgModule({
   declarations: [
@@ -45,6 +47,8 @@ import { ShiftDetailsComponent } from './user/shift-details/shift-details.compon
     MakerPositionsComponent,
     UserNavbarComponent,
     ShiftDetailsComponent,
+    HistoryComponent,
+    PendingshiftsComponent,
   ],
   imports: [
     BrowserModule,
