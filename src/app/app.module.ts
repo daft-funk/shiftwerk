@@ -2,13 +2,29 @@ import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 
 import { AppComponent } from './app.component';
+import { AppRoutingModule } from './app-routing.module';
+import { WerkerHomeComponent } from './werker/werker-home/werker-home.component';
+import { WerkerSearchComponent } from './werker/werker-search/werker-search.component';
+import { WerkerNotificationsComponent } from './werker/werker-notifications/werker-notifications.component';
+import { WerkerProfileComponent } from './werker/werker-profile/werker-profile.component';
+import { WerkerSettingsComponent } from './werker/werker-settings/werker-settings.component';
+import { WerkerHistoryComponent } from './werker/werker-history/werker-history.component';
+import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedule.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    WerkerHomeComponent,
+    WerkerSearchComponent,
+    WerkerNotificationsComponent,
+    WerkerProfileComponent,
+    WerkerSettingsComponent,
+    WerkerHistoryComponent,
+    WerkerScheduleComponent,
   ],
   imports: [
-    BrowserModule
+    BrowserModule,
+    AppRoutingModule
   ],
   providers: [],
   bootstrap: [AppComponent]
