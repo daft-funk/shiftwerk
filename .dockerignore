@@ -1,3 +1,6 @@
 node_modules
 npm-debug.log
 .vscode
+coverage
+__snapshots__
+dist
