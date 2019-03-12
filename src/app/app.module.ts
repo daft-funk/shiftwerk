@@ -13,6 +13,7 @@ import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedul
 import { MakerScheduleComponent } from './maker/maker-schedule/maker-schedule.component';
 import { MakerHomeComponent } from './maker/maker-home/maker-home.component';
 import { MakerSearchComponent } from './maker/maker-search/maker-search.component';
+import { MakerNotificationComponent } from './maker/maker-notification/maker-notification.component';
 
 @NgModule({
   declarations: [
@@ -27,6 +28,7 @@ import { MakerSearchComponent } from './maker/maker-search/maker-search.componen
     MakerScheduleComponent,
     MakerHomeComponent,
     MakerSearchComponent,
+    MakerNotificationComponent,
   ],
   imports: [
     BrowserModule,
