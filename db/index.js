@@ -1,19 +1,42 @@
-// HAVE NOT TESTED - ONCE VM INSTANCE RUNNING, CONNECT TO DB 
+// HAVE NOT TESTED - ONCE VM INSTANCE RUNNING, CONNECT TO DB
 // SET PORT, UPDATE .ENV, AND TEST - frank
-const postgres = require('postgres');
+const Sequelize = require('sequelize');
 
-const connection = postgres.createConnection({
-  host: process.env.DBHOST,
-  user: process.env.DBUSERNAME,
-  password: process.env.DBPASSWORD, 
-  database: process.env.DBNAME,
-  port: process.env.PORT,
-})
+const sequelize = new Sequelize('process.env.DBNAME', 'process.env.DBUSERNAME', 'process.env.DBPASSWORD', {
+  host: 'process.env.DBHOST',
+  dialect: 'postgres',
+  pool: {
+    max: 5,
+    min: 1,
+    acquire: 30000,
+    idle: 10000,
+  },
+});
 
-conncection.connect((err) => {
-  if (!err) {
-    console.log(`shiftwerk-db connected on port ${port}`);
-  } else {
-    console.log(`There was a problem connected to shiftwerk-db on port ${port}! Error: `, err);
+const models = {
+  Shift: sequelize.import('./Shift'),
+  Werker: sequelize.import('./Werker'),
+  ShiftPosition: sequelize.import('./ShiftPosition'),
+  Position: sequelize.import('./Position'),
+  PaymentType: sequelize.import('./PaymentType'),
+  Maker: sequelize.import('./Maker'),
+  Certification: sequelize.import('./Certification'),
+  WerkerCertification: sequelize.import('./WerkerCertification'),
+  Favorite: sequelize.import('./Favorite'),
+  Rating: sequelize.import('./Rating'),
+  InviteApply: sequelize.import('./InviteApply'),
+
+};
+
+Object.keys(models).forEach((modelName) => {
+  if ('associate' in models[modelName]) {
+    models[modelName].associate(models);
   }
-})
+});
+
+models.sequelize = sequelize;
+models.Sequelize = Sequelize;
+
+sequelize.sync().then(() => { console.log('created'); });
+
+module.exports.models = models;
