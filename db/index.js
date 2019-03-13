@@ -10,7 +10,7 @@ const connection = postgres.createConnection({
   port: process.env.PORT,
 })
 
-conncection.connect((err) => {
+connection.connect((err) => {
   if (!err) {
     console.log(`shiftwerk-db connected on port ${port}`);
   } else {
