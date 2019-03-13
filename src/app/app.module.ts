@@ -10,13 +10,10 @@ import { WerkerProfileComponent } from './werker/werker-profile/werker-profile.c
 import { WerkerSettingsComponent } from './werker/werker-settings/werker-settings.component';
 import { WerkerHistoryComponent } from './werker/werker-history/werker-history.component';
 import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedule.component';
-import { MakerScheduleComponent } from './maker/maker-schedule/maker-schedule.component';
 import { MakerHomeComponent } from './maker/maker-home/maker-home.component';
 import { MakerSearchComponent } from './maker/maker-search/maker-search.component';
-import { MakerNotificationComponent } from './maker/maker-notification/maker-notification.component';
 import { MakerProfileComponent } from './maker/maker-profile/maker-profile.component';
 import { MakerSettingsComponent } from './maker/maker-settings/maker-settings.component';
-import { MakerHistoryComponent } from './maker/maker-history/maker-history.component';
 import { MakerUnfilledShiftsComponent } from './maker/maker-unfilled-shifts/maker-unfilled-shifts.component';
 import { MakerCreateShiftComponent } from './maker/maker-create-shift/maker-create-shift.component';
 import { MakerPositionsComponent } from './maker/maker-positions/maker-positions.component';
