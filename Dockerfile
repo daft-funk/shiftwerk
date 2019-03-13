@@ -12,4 +12,4 @@ RUN npm install
 COPY . .
 
 EXPOSE 80
-CMD ["npm", "run server-dev"]
+CMD ["npm", "run", "server-prod"]
