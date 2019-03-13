@@ -10,6 +10,22 @@ import { WerkerProfileComponent } from './werker/werker-profile/werker-profile.c
 import { WerkerSettingsComponent } from './werker/werker-settings/werker-settings.component';
 import { WerkerHistoryComponent } from './werker/werker-history/werker-history.component';
 import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedule.component';
+import { MakerScheduleComponent } from './maker/maker-schedule/maker-schedule.component';
+import { MakerHomeComponent } from './maker/maker-home/maker-home.component';
+import { MakerSearchComponent } from './maker/maker-search/maker-search.component';
+import { MakerNotificationComponent } from './maker/maker-notification/maker-notification.component';
+import { MakerProfileComponent } from './maker/maker-profile/maker-profile.component';
+import { MakerSettingsComponent } from './maker/maker-settings/maker-settings.component';
+import { MakerHistoryComponent } from './maker/maker-history/maker-history.component';
+import { MakerUnfilledShiftsComponent } from './maker/maker-unfilled-shifts/maker-unfilled-shifts.component';
+import { MakerCreateShiftComponent } from './maker/maker-create-shift/maker-create-shift.component';
+import { MakerPositionsComponent } from './maker/maker-positions/maker-positions.component';
+import { UserNavbarComponent } from './user/user-navbar/user-navbar.component';
+import { ShiftDetailsComponent } from './user/shift-details/shift-details.component';
+import { HistoryComponent } from './user/history/history.component';
+import { PendingshiftsComponent } from './user/pendingshifts/pendingshifts.component';
+import { NotificationsComponent } from './user/notifications/notifications.component';
+import { ScheduleComponent } from './user/schedule/schedule.component';
 
 @NgModule({
   declarations: [
@@ -21,6 +37,22 @@ import { WerkerScheduleComponent } from './werker/werker-schedule/werker-schedul
     WerkerSettingsComponent,
     WerkerHistoryComponent,
     WerkerScheduleComponent,
+    MakerScheduleComponent,
+    MakerHomeComponent,
+    MakerSearchComponent,
+    MakerNotificationComponent,
+    MakerProfileComponent,
+    MakerSettingsComponent,
+    MakerHistoryComponent,
+    MakerUnfilledShiftsComponent,
+    MakerCreateShiftComponent,
+    MakerPositionsComponent,
+    UserNavbarComponent,
+    ShiftDetailsComponent,
+    HistoryComponent,
+    PendingshiftsComponent,
+    NotificationsComponent,
+    ScheduleComponent,
   ],
   imports: [
     BrowserModule,
