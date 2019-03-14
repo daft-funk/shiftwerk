@@ -3,8 +3,6 @@ const models = require('../db/index');
 
 const app = express();
 
-app.use(express.static('dist/Angular6App'));
-
 const port = process.env.PORT || 4000;
 
 
