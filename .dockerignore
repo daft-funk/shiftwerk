@@ -1,6 +1,0 @@
-node_modules
-npm-debug.log
-.vscode
-__snapshots__
-dist
-coverage
