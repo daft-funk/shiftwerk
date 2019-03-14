@@ -1,13 +1,3 @@
-/* 
-  accepting shifts
-  declining shifts
-  applying to shifts
-  searching for shifts
-  searching for werkers
-  inviting werkers to shift
-  getting user profile
-*/
-
 const sequelize = require('sequelize');
 const db = require('../db/index');
 
@@ -31,24 +21,54 @@ const acceptShift = (data) => {
 };
 
 // function to decline shifts
-const declineShift = () => {
+const declineShift = (data) => {
+  return db.models.InviteApply.update({
+    status: 'Declined',
+  }, {
+    where: {
+      werkerId: data.werkerId,
+      shiftId: data.shiftId,
+    },
+  });
 };
 
 // function to search for shifts
-const shiftSearch = () => {
+const shiftSearch = (data) => {
+  return db.models.findAll({
+    includes: [{
+      model: Position,
+      where: { position: data.position },
+    }, {
+      model: Shift,
+      where: {
+        duration: data.duration,
+        payment_amnt: data.payment_amnt,
+      },
+    }],
+  });
 };
 
 // function to search for werkers
-const werkerSearch = () => {
+const werkerSearch = (data) => {
+  return db.models.Werker.findOne({
+    where: {
+      position: data.position,
+    },
+  });
 };
 
 // function to invite werkers to a shift
 const inviteWerkers = (data) => {
-  return db.models.InviteApply.create({ 
+  return db.models.InviteApply.create({
     idWerker: data.idWerker, idShift: data.idWerker, idPosition: data.idPosition, status: data.status, expiration: data.expiration, type: data.type,
   });
 };
 
 // function to get a user profile
-const getProfile = (userId) => {
+const getProfile = (data) => {
+  return db.models.Werker.findOne({
+    where: {
+      id: data.id,
+    },
+  });
 };
