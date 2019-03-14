@@ -40,10 +40,10 @@ models.sequelize = sequelize;
 models.Sequelize = Sequelize;
 
 sequelize.authenticate()
-.then(() => {
-  console.log(`Connected to DB on ${process.env.DBHOST}`)
-})
-.catch(err => console.log(`Unable to connect because ${err}`));
+  .then(() => {
+    console.log(`Connected to DB on ${process.env.DBHOST}`);
+  })
+  .catch(err => console.log(`Unable to connect because ${err}`));
 
 sequelize.sync().then(() => { console.log('created'); });
 module.exports.models = models;
