@@ -2,38 +2,49 @@ const sequelize = require('sequelize');
 const db = require('../db/index');
 
 // function to create shifts
-const createShift = (data) => {
+const createShift = (name, time_date, duration, address, lat, long, payment_amnt, description, cache_rating) => {
   return db.models.Shift.create({
-    name: data.name, time_date: data.time_date, duration: data.duration, address: data.address, lat: data.lat, long: data.long, payment_amnt: data.payment_amnt, description: data.description, cache_rating: data.cache_rating,
+    name, time_date, duration, address, lat, long, payment_amnt, description, cache_rating,
+  });
+};
+
+// function to apply to shifts
+const applyForShift = (shiftId, werkerId) => {
+  return db.models.InviteApply.update({
+    status: 'Pending',
+    where: {
+      shiftId,
+      werkerId,
+    },
   });
 };
 
 // function to accept shifts
-const acceptShift = (data) => {
+const acceptShift = (shiftId, werkerId) => {
   return db.models.InviteApply.update({
     status: 'Accepted',
   }, {
     where: {
-      wekerId: data.werkerId,
-      shiftId: data.shiftId,
+      shiftId,
+      werkerId,
     },
   });
 };
 
 // function to decline shifts
-const declineShift = (data) => {
+const declineShift = (shiftId, werkerId) => {
   return db.models.InviteApply.update({
     status: 'Declined',
   }, {
     where: {
-      werkerId: data.werkerId,
-      shiftId: data.shiftId,
+      shiftId,
+      werkerId,
     },
   });
 };
 
 // function to search for shifts
-const shiftSearch = (data) => {
+const getShiftBySearchTermsAndVals = (data) => {
   return db.models.findAll({
     includes: [{
       model: Position,
@@ -49,8 +60,8 @@ const shiftSearch = (data) => {
 };
 
 // function to search for werkers
-const werkerSearch = (data) => {
-  return db.models.Werker.findOne({
+const getWerkersByTerm = (data) => {
+  return db.models.Werker.find({
     where: {
       position: data.position,
     },
@@ -58,9 +69,9 @@ const werkerSearch = (data) => {
 };
 
 // function to invite werkers to a shift
-const inviteWerkers = (data) => {
+const inviteWerker = (shiftId, data) => {
   return db.models.InviteApply.create({
-    idWerker: data.idWerker, idShift: data.idWerker, idPosition: data.idPosition, status: data.status, expiration: data.expiration, type: data.type,
+    idWerker: data.idWerker, idShift: shiftId, idPosition: data.idPosition, status: data.status, expiration: data.expiration, type: data.type,
   });
 };
 
@@ -71,4 +82,25 @@ const getProfile = (data) => {
       id: data.id,
     },
   });
+};
+
+// function to get a shift by ID
+const getShiftsById = (shiftId) => {
+  return db.models.Shift.findOne({
+    where: {
+      id: shiftId,
+    },
+  });
+};
+
+module.exports = {
+  getProfile,
+  inviteWerker,
+  getWerkersByTerm,
+  getShiftBySearchTermsAndVals,
+  declineShift,
+  acceptShift,
+  createShift,
+  applyForShift,
+  getShiftsById,
 };
