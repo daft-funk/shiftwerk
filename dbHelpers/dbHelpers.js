@@ -44,27 +44,18 @@ const declineShift = (shiftId, werkerId) => {
 };
 
 // function to search for shifts
-const getShiftBySearchTermsAndVals = (data) => {
-  return db.models.findAll({
-    includes: [{
-      model: "Position",
-      where: { position: data.position },
-    }, {
-      model: "Shift",
-      where: {
-        duration: data.duration,
-        payment_amnt: data.payment_amnt,
-      },
-    }],
+const getShiftsBySearchTermsAndVals = (data) => {
+  return db.models.ShiftPosition.find({
+    where: { id: data.PositionId, payment_amnt: data.payment_amnt },
+    include: [db.models.Shift, db.models.Position],
   });
 };
 
 // function to search for werkers
 const getWerkersByTerm = (data) => {
   return db.models.Werker.find({
-    where: {
-      position: data.position,
-    },
+    where: { id: data.PositionId },
+    include: [db.models.Position],
   });
 };
 
@@ -97,7 +88,7 @@ module.exports = {
   getProfile,
   inviteWerker,
   getWerkersByTerm,
-  getShiftBySearchTermsAndVals,
+  getShiftsBySearchTermsAndVals,
   declineShift,
   acceptShift,
   createShift,
