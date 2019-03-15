@@ -1,40 +1,6 @@
 /* eslint-disable camelcase */
 // const sequelize = require('sequelize');
 const db = require('../db/index');
-<<<<<<< HEAD
-
-// function to create shifts
-const createShift = (name,
-  time_date,
-  duration,
-  address,
-  lat,
-  long,
-  payment_amnt,
-  description,
-  cache_rating) => db.models.Shift.create({
-  name, time_date, duration, lat, long, payment_amnt, description, cache_rating,
-});
-
-// function to apply to shifts
-const applyForShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Pending',
-  where: {
-    shiftId,
-    werkerId,
-  },
-});
-
-// function to accept shifts
-const acceptShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Accepted',
-}, {
-  where: {
-    shiftId,
-    werkerId,
-  },
-});
-=======
 /**
  * Function used to create a new shift
  * @param {string} name - the name of the shift
@@ -83,7 +49,6 @@ const acceptShift = (shiftId, werkerId) => {
     },
   });
 };
->>>>>>> 83af677837caa607217762eaf34978ce2019dbd0
 
 /**
  * Function to decline shifts - updates the shift status to 'Declined'
@@ -100,43 +65,6 @@ const declineShift = (shiftId, werkerId) => db.models.InviteApply.update({
   },
 });
 
-<<<<<<< HEAD
-// function to search for shifts
-const getShiftsBySearchTermsAndVals = data => db.models.ShiftPosition.find({
-  where: { id: data.PositionId, payment_amnt: data.payment_amnt },
-  include: [db.models.Shift, db.models.Position],
-});
-
-// function to search for werkers
-const getWerkersByTerm = data => db.models.Werker.find({
-  where: { id: data.PositionId },
-  include: [db.models.Position],
-});
-
-// function to invite werkers to a shift
-const inviteWerker = (shiftId, data) => db.models.InviteApply.create({
-  idWerker: data.idWerker,
-  idShift: shiftId,
-  idPosition: data.idPosition,
-  status: data.status,
-  expiration: data.expiration,
-  type: data.type,
-});
-
-// function to get a user profile
-const getProfile = data => db.models.Werker.findOne({
-  where: {
-    id: data.id,
-  },
-});
-
-// function to get a shift by ID
-const getShiftsById = shiftId => db.models.Shift.findOne({
-  where: {
-    id: shiftId,
-  },
-});
-=======
 /**
  * Function to search for shifts by keywords
  * @param {object} data - an object with search terms
@@ -193,7 +121,48 @@ const getShiftsById = (shiftId) => {
     },
   });
 };
->>>>>>> 83af677837caa607217762eaf34978ce2019dbd0
+
+/**
+ * @function getAllShifts
+ * gets ten shifts from the DB, sorted by time_date
+ * and offset by a given amount
+ *
+ * @param {Number} offset - number of pages (by ten) to offset entries by
+ *
+ * @returns {Promise<Array<Object>>} - array of ten sequelize model instances
+ */
+const getAllShifts = (offset = 0) => db.models.Shift.findAll({
+  limit: 10,
+  offset: offset * 10,
+  order: [['time_date', 'DESC']],
+  include: [
+    {
+      model: db.models.Maker,
+      attributes: [
+        'name',
+      ],
+    },
+    {
+      model: db.models.Position,
+      through: {
+        attributes: [
+          'payment_amnt',
+          'position',
+          'filled',
+        ],
+      },
+    },
+    {
+      model: db.models.Werker,
+      through: {
+        attributes: [
+          'id',
+          'name',
+        ],
+      },
+    },
+  ],
+});
 
 module.exports = {
   getProfile,
@@ -205,4 +174,5 @@ module.exports = {
   createShift,
   applyForShift,
   getShiftsById,
+  getAllShifts,
 };
