@@ -10,7 +10,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-// const models = require('../db/index');
+const { models } = require('../db/index');
 
 
 app.get('/', (req, res) => {
@@ -20,7 +20,7 @@ app.get('/', (req, res) => {
 // get list of shifts by term and value for werker
 app.get('/shifts', (req, res) => {
   // TODO check helper function name
-  dbHelpers.getShiftsBySearchTermsAndVals(req.query)
+  dbHelpers.getAllShifts()
     .then((shifts) => {
       res.send(shifts);
     })
@@ -60,6 +60,51 @@ app.get('/werkers', (req, res) => {
     .catch((error) => {
       console.log(error, 'unable to get werkers');
       res.status(500).send('unable to get werkers');
+    });
+});
+
+/**
+ * PUT /werkers
+ * expects body with following properties:
+ *  name_first
+ *  name_last
+ *  email
+ *  url_photo
+ *  bio
+ *  phone
+ *  last_minute
+ *  lat
+ *  long
+ * creates new resource in db
+ * sends back new db record
+ */
+
+app.put('/werkers', (req, res) => {
+  models.Werker.create(req.body)
+    .then(newWerker => res.json(201, newWerker))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
+    });
+});
+
+/**
+ * PUT /makers
+ * expects body with the following properties:
+ *  name
+ *  url_photo
+ *  email
+ *  phone
+ * creates new resource in db
+ * sends back new db record
+ */
+
+app.put('/makers', (req, res) => {
+  models.Maker.create(req.body)
+    .then(newMaker => res.json(201, newMaker))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
     });
 });
 
@@ -133,6 +178,15 @@ app.patch('/shifts/:shiftId/application', (req, res) => {
   }
 });
 
+app.delete('/shifts/:shiftId', (req, res) => {
+  const { shiftId } = req.params;
+  return dbHelpers.deleteShift(shiftId)
+    .then(() => res.send(204))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send('unable to delete');
+    });
+});
 
 const port = process.env.PORT || 4000;
 // models.sequelize.sync();
