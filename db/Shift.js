@@ -21,6 +21,10 @@ module.exports = (sequelize, DataTypes) => {
       through: 'ShiftPaymentType',
       foreignKey: 'ShiftId',
     });
+    Shift.belongsToMany(models.Position, {
+      through: models.ShiftPosition,
+      foreignKey: 'PositionId',
+    });
   };
   return Shift;
 };

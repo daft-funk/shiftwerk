@@ -8,6 +8,10 @@ module.exports = (sequelize, DataTypes) => {
       through: 'WerkerPosition',
       foreignKey: 'WerkerId',
     });
+    Position.belongsToMany(models.Shift, {
+      through: 'ShiftPosition',
+      foreignKey: 'ShiftId',
+    });
   };
   return Position;
 };
