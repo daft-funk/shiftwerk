@@ -123,13 +123,12 @@ const getShiftsById = (shiftId) => {
 };
 
 /**
- * @function getAllShifts
  * gets ten shifts from the DB, sorted by time_date
  * and offset by a given amount
  *
  * @param {Number} offset - number of pages (by ten) to offset entries by
  *
- * @returns {Promise<Array<Object>>} - array of ten sequelize model instances
+ * @returns {Promise<any[]>} - array of ten sequelize model instances
  */
 const getAllShifts = (offset = 0) => db.models.Shift.findAll({
   limit: 10,
@@ -164,6 +163,16 @@ const getAllShifts = (offset = 0) => db.models.Shift.findAll({
   ],
 });
 
+/**
+ * deletes a shift from the database by id
+ *
+ * @param {number} id
+ * @returns {Promise<number>} - number of models destroyed
+ */
+const deleteShift = id => db.models.Shift.destroy({
+  where: { id },
+});
+
 module.exports = {
   getProfile,
   inviteWerker,
@@ -175,4 +184,5 @@ module.exports = {
   applyForShift,
   getShiftsById,
   getAllShifts,
+  deleteShift,
 };
