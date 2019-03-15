@@ -13,8 +13,8 @@ const Sequelize = require('sequelize');
 //   },
 // });
 
-const sequelize = new Sequelize('postgres://Admin@----/postgres');
-
+const sequelize = new Sequelize('postgres://Admin:passwerk@34.73.184.185:5432/postgres');
+// change made
 const models = {
   Shift: sequelize.import('./Shift'),
   Werker: sequelize.import('./Werker'),
