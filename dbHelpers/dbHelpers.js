@@ -47,10 +47,10 @@ const declineShift = (shiftId, werkerId) => {
 const getShiftBySearchTermsAndVals = (data) => {
   return db.models.findAll({
     includes: [{
-      model: Position,
+      model: "Position",
       where: { position: data.position },
     }, {
-      model: Shift,
+      model: "Shift",
       where: {
         duration: data.duration,
         payment_amnt: data.payment_amnt,
