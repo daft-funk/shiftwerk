@@ -3,7 +3,6 @@ module.exports = (sequelize, DataTypes) => {
     name: DataTypes.STRING,
     time_date: DataTypes.DATE,
     duration: DataTypes.NUMERIC,
-    address: DataTypes.STRING,
     lat: DataTypes.NUMERIC,
     long: DataTypes.NUMERIC,
     description: DataTypes.STRING,

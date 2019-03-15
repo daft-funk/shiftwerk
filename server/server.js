@@ -10,7 +10,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const models = require('../db/index');
+// const models = require('../db/index');
 
 
 app.get('/', (req, res) => {
