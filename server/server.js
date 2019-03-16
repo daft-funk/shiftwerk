@@ -135,17 +135,20 @@ app.put('/auth', (req, res) => {
 /**
  * PUT /shifts
  * expects body with the following properties:
+ *  MakerId
  *  name
  *  time_date
  *  duration
  *  lat
  *  long
  *  description
- *  Position[]
+ *  Positions[]
  *   Position is obj with:
  *   position
- *   payment_amnt
- *  payment_type
+ *   ShiftPosition: obj with:
+ *    payment_amnt
+ *  PaymentType: obj with:
+ *    name
  */
 app.put('/shifts', (req, res) => {
   const { body } = req;
