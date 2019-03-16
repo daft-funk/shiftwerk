@@ -5,12 +5,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Rating.associate = (models) => {
-    Rating.belongsTo(models.Werker, {
-      foreignKey: 'WerkerID',
-    });
-    Rating.belongsTo(models.Shift, {
-      foreignKey: 'ShiftID',
-    });
+    Rating.belongsTo(models.Werker);
+    Rating.belongsTo(models.Shift);
   };
   return Rating;
 };

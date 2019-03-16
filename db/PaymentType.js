@@ -6,7 +6,6 @@ module.exports = (sequelize, DataTypes) => {
   PaymentType.associate = (models) => {
     PaymentType.belongsToMany(models.Shift, {
       through: 'ShiftPaymentType',
-      foreignKey: 'ShiftId',
     });
   };
   return PaymentType;

@@ -5,12 +5,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   ShiftPosition.associate = (models) => {
-    ShiftPosition.belongsTo(models.Shift, {
-      foreignKey: 'ShiftId',
-    });
-    ShiftPosition.belongsTo(models.Position, {
-      foreignKey: 'PositionId',
-    });
+    ShiftPosition.belongsTo(models.Shift);
+    ShiftPosition.belongsTo(models.Position);
   };
   return ShiftPosition;
 };

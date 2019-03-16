@@ -6,15 +6,9 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   InviteApply.associate = (models) => {
-    InviteApply.belongsTo(models.Shift, {
-      foreignKey: 'ShiftId',
-    });
-    InviteApply.belongsTo(models.Werker, {
-      foreignKey: 'WerkerId',
-    });
-    InviteApply.belongsTo(models.Position, {
-      foreignKey: 'PositionId',
-    });
+    InviteApply.belongsTo(models.Shift);
+    InviteApply.belongsTo(models.Werker);
+    InviteApply.belongsTo(models.Position);
   };
   return InviteApply;
 };

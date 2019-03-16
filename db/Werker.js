@@ -15,11 +15,9 @@ module.exports = (sequelize, DataTypes) => {
   Werker.associate = (models) => {
     Werker.belongsToMany(models.Position, {
       through: 'WerkerPosition',
-      foreignKey: 'WerkerId',
     });
     Werker.belongsToMany(models.Shift, {
       through: 'WerkerShift',
-      foreignKey: 'WerkerId',
     });
   };
   return Werker;

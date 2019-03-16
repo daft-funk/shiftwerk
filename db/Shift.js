@@ -6,24 +6,20 @@ module.exports = (sequelize, DataTypes) => {
     lat: DataTypes.NUMERIC,
     long: DataTypes.NUMERIC,
     description: DataTypes.STRING,
+    payment_type: DataTypes.STRING,
     cache_rating: DataTypes.NUMERIC,
   });
 
   Shift.associate = (models) => {
-    Shift.belongsTo(models.Maker, {
-      foreignKey: 'MakerId',
-    });
+    Shift.belongsTo(models.Maker);
     Shift.belongsToMany(models.Werker, {
       through: 'WerkerShift',
-      foreignKey: 'WerkerId',
     });
     Shift.belongsToMany(models.PaymentType, {
       through: 'ShiftPaymentType',
-      foreignKey: 'PaymentTypeId',
     });
     Shift.belongsToMany(models.Position, {
       through: models.ShiftPosition,
-      foreignKey: 'PositionId',
     });
   };
   return Shift;

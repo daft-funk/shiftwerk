@@ -6,7 +6,6 @@ module.exports = (sequelize, DataTypes) => {
   Certification.associate = (models) => {
     Certification.belongsToMany(models.Werker, {
       through: 'WerkerCertification',
-      foreignKey: 'CertificationId',
     });
   };
   return Certification;
