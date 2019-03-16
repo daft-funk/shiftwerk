@@ -1,8 +1,10 @@
+const moment = require('moment');
+
 module.exports = (sequelize, DataTypes) => {
   const InviteApply = sequelize.define('InviteApply', {
-    status: DataTypes.STRING,
-    expiration: DataTypes.DATE,
-    type: DataTypes.STRING,
+    type: { type: DataTypes.ENUM('invite', 'apply'), allowNull: false },
+    status: DataTypes.ENUM('accept', 'decline', 'pending'),
+    expiration: { type: DataTypes.DATE, defaultValue: moment().add(1, 'days') },
   });
 
   InviteApply.associate = (models) => {

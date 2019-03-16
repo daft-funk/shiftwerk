@@ -1,7 +1,7 @@
 module.exports = (sequelize, DataTypes) => {
   const ShiftPosition = sequelize.define('ShiftPosition', {
-    payment_amnt: DataTypes.NUMERIC,
-    filled: DataTypes.BOOLEAN,
+    payment_amnt: { type: DataTypes.NUMERIC, allowNull: false },
+    filled: { type: DataTypes.BOOLEAN, defaultValue: false },
   });
 
   ShiftPosition.associate = (models) => {

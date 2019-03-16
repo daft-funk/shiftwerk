@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const PaymentType = sequelize.define('PaymentType', {
-    name: DataTypes.STRING,
+    name: { type: DataTypes.STRING, unique: true, allowNull: false },
   });
 
   PaymentType.associate = (models) => {

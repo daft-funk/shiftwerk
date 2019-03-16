@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Position = sequelize.define('Position', {
-    position: DataTypes.STRING,
+    position: { type: DataTypes.STRING, unique: true, allowNull: false },
   });
 
   Position.associate = (models) => {

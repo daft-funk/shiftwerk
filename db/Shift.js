@@ -1,12 +1,12 @@
 module.exports = (sequelize, DataTypes) => {
   const Shift = sequelize.define('Shift', {
-    name: DataTypes.STRING,
-    time_date: DataTypes.DATE,
-    duration: DataTypes.NUMERIC,
-    lat: DataTypes.NUMERIC,
-    long: DataTypes.NUMERIC,
-    description: DataTypes.STRING,
-    payment_type: DataTypes.STRING,
+    name: { type: DataTypes.STRING, allowNull: false },
+    time_date: { type: DataTypes.DATE, allowNull: false },
+    duration: { type: DataTypes.NUMERIC, allowNull: false },
+    lat: { type: DataTypes.NUMERIC, allowNull: false },
+    long: { type: DataTypes.NUMERIC, allowNull: false },
+    description: { type: DataTypes.STRING, allowNull: false },
+    payment_type: { type: DataTypes.STRING, allowNull: false },
     cache_rating: DataTypes.NUMERIC,
   });
 

@@ -47,3 +47,4 @@ sequelize.authenticate()
 
 sequelize.sync().then(() => { console.log('created'); });
 module.exports.models = models;
+module.exports.sequelize = sequelize;

@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const WerkerCertification = sequelize.define('WerkerCertification', {
-    url_Photo: DataTypes.STRING,
+    url_Photo: { type: DataTypes.STRING, allowNull: false },
   });
 
   WerkerCertification.associate = (models) => {
