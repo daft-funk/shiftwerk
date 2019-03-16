@@ -51,6 +51,17 @@ app.get('/shifts/:shiftId', (req, res) => {
     });
 });
 
+// get werkers eligible for invitation to shift
+app.get('/shifts/:shiftId/invite', (req, res) => {
+  const { shiftId } = req.params;
+  dbHelpers.getWerkersForShift(shiftId)
+    .then(werkers => res.json(200, werkers))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
+    });
+});
+
 // get profile for werker
 app.get('/werkers/:werkerId', (req, res) => {
   dbHelpers.getWerkerProfile(req.params.werkerId)
