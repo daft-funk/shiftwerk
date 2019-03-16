@@ -162,6 +162,46 @@ const getWerkersByTerm = data => db.models.Werker.find({
 });
 
 /**
+ * gets all werkers eligible for a shift by their listed positions
+ * executes raw SQL query for convenience (sometimes it's just easier!)
+ *
+ * @param {number} id - shift ID from db
+ * @returns {Promise<Object[]>} - array containing array of obj results
+ * and object describing query
+ */
+const getWerkersForShift = id => db.sequelize.query(`
+SELECT w.*
+FROM "Werkers" w
+INNER JOIN "WerkerPosition" wp
+  ON w.id=wp."WerkerId"
+INNER JOIN "Positions" p
+  ON p.id=wp."PositionId"
+INNER JOIN "ShiftPositions" sp
+  ON p.id=sp."PositionId"
+WHERE sp."ShiftId"=?`, { replacements: [id] })
+  .then((queryResult) => {
+    const fetchedWerkers = queryResult[0];
+    return Promise.all(fetchedWerkers.map(werker => db.sequelize.query(`
+      SELECT c.*, wc.*
+      FROM "Certifications" c
+      INNER JOIN "WerkerCertifications" wc
+      ON c.id=wc."CertificationId"
+      INNER JOIN "Werkers" w
+      ON w.id=wc."WerkerId"
+      WHERE w.id=?`, { replacements: [werker.id] })
+      .then(certifications => Object.assign(werker, { certifications: certifications[0] }))
+      .then(werkerWithCerts => db.sequelize.query(`
+      SELECT p.position
+      FROM "Positions" p
+      INNER JOIN "WerkerPosition" wp
+      ON p.id=wp."PositionId"
+      INNER JOIN "Werkers" w
+      ON w.id=wp."WerkerId"
+      WHERE w.id=?`, { replacements: [werkerWithCerts.id] })
+        .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] })))));
+  });
+
+/**
  * Function to invite a werker to a shift - creates a new invitation
  * @param {number} shiftId - the id of the shift that the werker will be invited to
  * @param {object} data - the data needed to create the new invitation
@@ -274,4 +314,5 @@ module.exports = {
   addWerker,
   bulkAddCertificationToWerker,
   bulkAddPositionToWerker,
+  getWerkersForShift,
 };
