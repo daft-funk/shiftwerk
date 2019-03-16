@@ -1,10 +1,9 @@
 module.exports = (sequelize, DataTypes) => {
   const Maker = sequelize.define('Maker', {
-
-    name: DataTypes.STRING,
-    url_photo: DataTypes.STRING,
+    name: { type: DataTypes.STRING, unique: true, allowNull: false },
+    url_photo: { type: DataTypes.STRING, allowNull: false },
     phone: DataTypes.INTEGER,
-    email: DataTypes.STRING,
+    email: { type: DataTypes.STRING, allowNull: false, unique: true },
     cache_rating: DataTypes.NUMERIC,
   });
 

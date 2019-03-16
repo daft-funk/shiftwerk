@@ -1,20 +1,16 @@
+const moment = require('moment');
+
 module.exports = (sequelize, DataTypes) => {
   const InviteApply = sequelize.define('InviteApply', {
-    status: DataTypes.STRING,
-    expiration: DataTypes.DATE,
-    type: DataTypes.STRING,
+    type: { type: DataTypes.ENUM('invite', 'apply'), allowNull: false },
+    status: DataTypes.ENUM('accept', 'decline', 'pending'),
+    expiration: { type: DataTypes.DATE, defaultValue: moment().add(1, 'days') },
   });
 
   InviteApply.associate = (models) => {
-    InviteApply.belongsTo(models.Shift, {
-      foreignKey: 'ShiftId',
-    });
-    InviteApply.belongsTo(models.Werker, {
-      foreignKey: 'WerkerId',
-    });
-    InviteApply.belongsTo(models.Position, {
-      foreignKey: 'PositionId',
-    });
+    InviteApply.belongsTo(models.Shift);
+    InviteApply.belongsTo(models.Werker);
+    InviteApply.belongsTo(models.Position);
   };
   return InviteApply;
 };

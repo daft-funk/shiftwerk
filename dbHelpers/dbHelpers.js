@@ -1,21 +1,82 @@
-const sequelize = require('sequelize');
+/* eslint-disable camelcase */
+// const sequelize = require('sequelize');
 const db = require('../db/index');
 /**
  * Function used to create a new shift
  * @param {string} name - the name of the shift
  * @param {date} time_date - the time and date of the shift
- * @param {numbr} duration - the duration of the shift
- * @param {string} address - the address of the shift
+ * @param {number} duration - the duration of the shift in minutes
  * @param {number} lat - the latitude of the shift
  * @param {number} long - the longitude of the shift
- * @param {number} payment_amnt - the amount of money the shift is paying
  * @param {string} description - a short description of the shift
- * @param {number} cache_rating - a chached rating
+ * @param {Array<object>} positions - each position object has properties "position" and "payment_amnt"
+ * @param {string} payment_type - what format the pay is in, e.g. cash, digital, check
  */
-const createShift = (name, time_date, duration, address, lat, long, payment_amnt, description, cache_rating) => {
+const createShift = ({
+  MakerId,
+  name,
+  time_date,
+  duration,
+  lat,
+  long,
+  description,
+  positions,
+  payment_type,
+}) => {
   return db.models.Shift.create({
-    name, time_date, duration, address, lat, long, payment_amnt, description, cache_rating,
-  });
+    MakerId,
+    name,
+    time_date,
+    duration,
+    lat,
+    long,
+    description,
+    payment_type,
+  })
+    .then(newShift => {
+      return bulkAddNewPositionsToShift(newShift, positions);
+    })
+  // return bulkAddNewPositions(positions.map(position => ({position: position.position})))
+  //   .then((Positions) => {
+  //     return db.models.Shift.create({
+  //       MakerId,
+  //       name,
+  //       time_date,
+  //       duration,
+  //       lat,
+  //       long,
+  //       description,
+  //       payment_type,
+  //     }, {
+  //       include: Positions.slice(0, Positions.length - 1),
+  //     })
+      // .then((newShift) => {
+        // return newShift.setPositions(newPositions, { through: positions.map(position => ({ payment_amnt: position.payment_amnt }))});
+        // return Promise.all(newPositions.slice(0, newPositions.length - 1).map((position, index) => newShift.addPosition(position, { through: { payment_amnt: positions[index].payment_amnt } })));
+      // });
+    // });
+  // db.models.Shift.create({
+  //   MakerId,
+  //   name,
+  //   time_date,
+  //   duration,
+  //   lat,
+  //   long,
+  //   description,
+  // });
+};
+
+/**
+ * Adds an array of items to Positions table or updates if they exist
+ * @param {Object} positions - key: position, val: string, key: ShiftPosition: value: { payment_amnt: Number }
+ */
+const bulkAddNewPositionsToShift = (shift, positions) => {
+  return Promise.all(positions.map(position => db.models.Position.upsert(position, { returning: true })
+    .then(([newPosition, updated]) => db.models.ShiftPosition.create({
+      ShiftId: shift.id,
+      PositionId: newPosition.id,
+      payment_amnt: position.payment_amnt,
+    }))));
 };
 
 /**
@@ -55,16 +116,14 @@ const acceptShift = (shiftId, werkerId) => {
  * @param {number} werkerId - the id of the werker declining the shift
  */
 // function to decline shifts
-const declineShift = (shiftId, werkerId) => {
-  return db.models.InviteApply.update({
-    status: 'Declined',
-  }, {
-    where: {
-      shiftId,
-      werkerId,
-    },
-  });
-};
+const declineShift = (shiftId, werkerId) => db.models.InviteApply.update({
+  status: 'Declined',
+}, {
+  where: {
+    shiftId,
+    werkerId,
+  },
+});
 
 /**
  * Function to search for shifts by keywords
@@ -123,6 +182,57 @@ const getShiftsById = (shiftId) => {
   });
 };
 
+/**
+ * gets ten shifts from the DB, sorted by time_date
+ * and offset by a given amount
+ *
+ * @param {Number} offset - number of pages (by ten) to offset entries by
+ *
+ * @returns {Promise<any[]>} - array of ten sequelize model instances
+ */
+const getAllShifts = (offset = 0) => db.models.Shift.findAll({
+  limit: 10,
+  offset: offset * 10,
+  order: [['time_date', 'DESC']],
+  include: [
+    {
+      model: db.models.Maker,
+      attributes: [
+        'name',
+      ],
+    },
+    {
+      model: db.models.Position,
+      through: {
+        attributes: [
+          'payment_amnt',
+          'position',
+          'filled',
+        ],
+      },
+    },
+    {
+      model: db.models.Werker,
+      through: {
+        attributes: [
+          'id',
+          'name',
+        ],
+      },
+    },
+  ],
+});
+
+/**
+ * deletes a shift from the database by id
+ *
+ * @param {number} id
+ * @returns {Promise<number>} - number of models destroyed
+ */
+const deleteShift = id => db.models.Shift.destroy({
+  where: { id },
+});
+
 module.exports = {
   getProfile,
   inviteWerker,
@@ -133,4 +243,7 @@ module.exports = {
   createShift,
   applyForShift,
   getShiftsById,
+  getAllShifts,
+  deleteShift,
+  bulkAddNewPositionsToShift,
 };
