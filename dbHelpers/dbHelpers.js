@@ -177,10 +177,23 @@ const inviteWerker = (shiftId, data) => db.models.InviteApply.create({
  * Function to get a user profile
  * @param {object} data - object containing the user's id
  */
-const getProfile = data => db.models.Werker.findOne({
-  where: {
-    id: data.id,
-  },
+const getWerkerProfile = id => db.models.Werker.findOne({
+  where: { id },
+  include: [
+    {
+      model: db.models.Certification,
+      attributes: [
+        'cert_name',
+        'url_Photo',
+      ],
+    },
+    {
+      model: db.models.Position,
+      attributes: [
+        'position',
+      ],
+    },
+  ],
 });
 
 /**
@@ -245,7 +258,7 @@ const deleteShift = id => db.models.Shift.destroy({
 });
 
 module.exports = {
-  getProfile,
+  getWerkerProfile,
   inviteWerker,
   getWerkersByTerm,
   getShiftsBySearchTermsAndVals,
