@@ -22,6 +22,7 @@ app.get('/shifts', (req, res) => {
   // TODO check helper function name
   dbHelpers.getShiftsBySearchTermsAndVals(req.query)
     .then((shifts) => {
+      console.log(shifts, 'DING DING /shifts endpoint');
       res.send(shifts);
     })
     .catch((error) => {
@@ -47,7 +48,8 @@ app.get('/shifts/:shiftId', (req, res) => {
 // get profile for maker and werker
 app.get('/profile', (req, res) => {
   // TODO what to put in here...?
-  res.send('meow');
+  console.log('PUT SOMETHING IN PROFILE');
+  res.send('PUT SOMETHING IN PROFILE');
 });
 
 // get list of werkers by terms
