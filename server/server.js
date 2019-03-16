@@ -119,6 +119,15 @@ app.put('/makers', (req, res) => {
     });
 });
 
+app.get('/makers/:makerId', (req, res) => {
+  models.Maker.findOne({ where: { id: req.params.makerId } })
+    .then(maker => res.json(201, maker))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
+    });
+});
+
 // invite werkers
 app.put('/shifts/:shiftId/invite', (req, res) => {
   const shiftId = JSON.parse(req.params.shiftId);
