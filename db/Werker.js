@@ -6,9 +6,21 @@ module.exports = (sequelize, DataTypes) => {
     url_photo: DataTypes.STRING,
     bio: DataTypes.STRING,
     phone: DataTypes.INTEGER,
-    last_minute: DataTypes.BOOL,
+    last_minute: DataTypes.BOOLEAN,
     lat: DataTypes.NUMERIC,
     long: DataTypes.NUMERIC,
+    cache_rating: DataTypes.NUMERIC,
   });
+
+  Werker.associate = (models) => {
+    Werker.belongsToMany(models.Position, {
+      through: 'WerkerPosition',
+      foreignKey: 'WerkerId',
+    });
+    Werker.belongsToMany(models.Shift, {
+      through: 'WerkerShift',
+      foreignKey: 'WerkerId',
+    });
+  };
   return Werker;
 };
