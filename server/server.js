@@ -2,8 +2,13 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const { google } = require('googleapis');
 // TODO need to make sure this is the correct path for dbHelpers
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
+// const oauth2Client = new google.auth.OAuth2(
+//   '347712232584-9dv95ud3ilg9bk7vg8i0biqav62fh1q7.apps.googleusercontent.com',
+//   'WBbo3VF1_r9zsOovnfdi0h1Z',
+// );
 
 
 const app = express();
@@ -122,11 +127,30 @@ app.put('/shifts/:shiftId/invite', (req, res) => {
     });
 });
 
+app.put('/auth', (req, res) => {
+  const { tokens } = google
+});
+
 // create shift
+/**
+ * PUT /shifts
+ * expects body with the following properties:
+ *  name
+ *  time_date
+ *  duration
+ *  lat
+ *  long
+ *  description
+ *  Position[]
+ *   Position is obj with:
+ *   position
+ *   payment_amnt
+ *  payment_type
+ */
 app.put('/shifts', (req, res) => {
-  const { name, time_date, duration, address, lat, long, payment_amnt, description, cash_rating  } = req.body;
+  const { body } = req;
   // TODO need to make sure im retreiving information correctly
-  dbHelpers.createShift(name, time_date, duration, address, lat, long, payment_amnt, description, cash_rating)
+  dbHelpers.createShift(body)
     .then(() => {
       res.send(201);
     })
