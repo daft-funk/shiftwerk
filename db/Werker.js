@@ -19,6 +19,9 @@ module.exports = (sequelize, DataTypes) => {
     Werker.belongsToMany(models.Shift, {
       through: 'WerkerShift',
     });
+    Werker.belongsToMany(models.Certification, {
+      through: models.WerkerCertification,
+    });
   };
   return Werker;
 };

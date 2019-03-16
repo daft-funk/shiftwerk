@@ -9,6 +9,7 @@ module.exports = (sequelize, DataTypes) => {
     });
     Position.belongsToMany(models.Shift, {
       through: models.ShiftPosition,
+      foreignKey: 'PositionId',
     });
   };
   return Position;
