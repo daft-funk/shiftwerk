@@ -5,12 +5,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   Favorite.associate = (models) => {
-    Favorite.belongsTo(models.Werker, {
-      foreignKey: 'WerkerID',
-    });
-    Favorite.belongsTo(models.Maker, {
-      foreignKey: 'MakerID',
-    });
+    Favorite.belongsTo(models.Werker);
+    Favorite.belongsTo(models.Maker);
   };
   return Favorite;
 };
