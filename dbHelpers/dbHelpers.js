@@ -48,6 +48,38 @@ const createShift = ({
   .then(newShift => bulkAddNewPositionsToShift(newShift, positions));
 
 /**
+ * adds any number of certifications to a werker
+ *
+ * @param {Object} werker - werker model instance
+ * @param {Object[]} certifications
+ * @param {string} certifications.name
+ * @param {string} certifications.url_photo
+ */
+const bulkAddCertificationToWerker = (werker, certifications) => Promise.all(certifications
+  .map(certification => db.models.Certification.upsert(certification, { returning: true })
+    // eslint-disable-next-line no-unused-vars
+    .then(([newCert, updated]) => db.models.WerkerCertification.create({
+      WerkerId: werker.id,
+      CertificationId: newCert.id,
+      url_Photo: certification.url_Photo,
+    }))));
+
+/**
+ * adds any number of new positions to db and werker
+ *
+ * @param {Object} werker - werker model instance
+ * @param {Object[]} positions
+ * @param {string} positions.position
+ */
+const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
+  .map(position => db.models.Position.upsert(position, { returning: true })
+    // eslint-disable-next-line no-unused-vars
+    .then(([newPosition, updated]) => db.models.WerkerPosition.create({
+      WerkerId: werker.id,
+      PositionId: newPosition.id,
+    }))));
+
+/**
  * adds new werker to DB, including certifications and positions
  *
  * @param {Object} info
@@ -58,10 +90,14 @@ const createShift = ({
  * @param {string} info.bio
  * @param {number} info.phone
  * @param {boolean} info.last_minute
+ * @param {Object[]} info.certifications
+ * @param {string} info.certifications.cert_name
+ * @param {string} info.certifications.url_photo
+ * @param {Object[]} info.positions
+ * @param {string} info.positions.position
  */
-const addWerker = (info) => {
-
-};
+const addWerker = info => db.models.create(info)
+  .then(newWerker => bulkAddCertificationToWerker(newWerker, info.certifications));
 
 /**
  * Function used to apply for a shift - updates the shift status to 'Pending'
@@ -222,4 +258,6 @@ module.exports = {
   deleteShift,
   bulkAddNewPositionsToShift,
   addWerker,
+  bulkAddCertificationToWerker,
+  bulkAddPositionToWerker,
 };
