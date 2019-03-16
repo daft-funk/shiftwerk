@@ -10,7 +10,7 @@ const db = require('../db/index');
  * @param {number} long - the longitude of the shift
  * @param {string} description - a short description of the shift
  * @param {Array<object>} positions - each position object has properties "position" and "payment_amnt"
- * @param {string} paymentType - what format the pay is in, e.g. cash, digital, check
+ * @param {string} payment_type - what format the pay is in, e.g. cash, digital, check
  */
 const createShift = ({
   MakerId,
@@ -19,33 +19,65 @@ const createShift = ({
   duration,
   lat,
   long,
+  description,
   positions,
-  description,
-  paymentType,
-}) => db.models.Shift.create({
-  MakerId,
-  name,
-  time_date,
-  duration,
-  lat,
-  long,
-  description,
-})
-  .then(newShift => Promise.all([
-    positions.map(position => newShift.addPosition(
-      db.models.Position.build({
-        position: position.position,
-      }), {
-        through: {
-          payment_amnt: position.payment_amnt,
-        },
-      },
-    )),
-    newShift.addPaymentType(db.models.PaymentType.build({
-      name: paymentType,
-    })),
-  ]));
+  payment_type,
+}) => {
+  return db.models.Shift.create({
+    MakerId,
+    name,
+    time_date,
+    duration,
+    lat,
+    long,
+    description,
+    payment_type,
+  })
+    .then(newShift => {
+      return bulkAddNewPositionsToShift(newShift, positions);
+    })
+  // return bulkAddNewPositions(positions.map(position => ({position: position.position})))
+  //   .then((Positions) => {
+  //     return db.models.Shift.create({
+  //       MakerId,
+  //       name,
+  //       time_date,
+  //       duration,
+  //       lat,
+  //       long,
+  //       description,
+  //       payment_type,
+  //     }, {
+  //       include: Positions.slice(0, Positions.length - 1),
+  //     })
+      // .then((newShift) => {
+        // return newShift.setPositions(newPositions, { through: positions.map(position => ({ payment_amnt: position.payment_amnt }))});
+        // return Promise.all(newPositions.slice(0, newPositions.length - 1).map((position, index) => newShift.addPosition(position, { through: { payment_amnt: positions[index].payment_amnt } })));
+      // });
+    // });
+  // db.models.Shift.create({
+  //   MakerId,
+  //   name,
+  //   time_date,
+  //   duration,
+  //   lat,
+  //   long,
+  //   description,
+  // });
+};
 
+/**
+ * Adds an array of items to Positions table or updates if they exist
+ * @param {Object} positions - key: position, val: string, key: ShiftPosition: value: { payment_amnt: Number }
+ */
+const bulkAddNewPositionsToShift = (shift, positions) => {
+  return Promise.all(positions.map(position => db.models.Position.upsert(position, { returning: true })
+    .then(([newPosition, updated]) => db.models.ShiftPosition.create({
+      ShiftId: shift.id,
+      PositionId: newPosition.id,
+      payment_amnt: position.payment_amnt,
+    }))));
+};
 
 /**
  * Function used to apply for a shift - updates the shift status to 'Pending'
@@ -213,4 +245,5 @@ module.exports = {
   getShiftsById,
   getAllShifts,
   deleteShift,
+  bulkAddNewPositionsToShift,
 };
