@@ -8,6 +8,7 @@ const db = require('../db/index');
  */
 const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
   .map(position => db.models.Position.upsert(position, { returning: true })
+    // eslint-disable-next-line no-unused-vars
     .then(([newPosition, updated]) => db.models.ShiftPosition.create({
       ShiftId: shift.id,
       PositionId: newPosition.id,
@@ -45,6 +46,22 @@ const createShift = ({
   payment_type,
 })
   .then(newShift => bulkAddNewPositionsToShift(newShift, positions));
+
+/**
+ * adds new werker to DB, including certifications and positions
+ *
+ * @param {Object} info
+ * @param {string} info.name_first
+ * @param {string} info.name_last
+ * @param {string} info.email
+ * @param {string} info.url_photo
+ * @param {string} info.bio
+ * @param {number} info.phone
+ * @param {boolean} info.last_minute
+ */
+const addWerker = (info) => {
+
+};
 
 /**
  * Function used to apply for a shift - updates the shift status to 'Pending'
@@ -204,4 +221,5 @@ module.exports = {
   getAllShifts,
   deleteShift,
   bulkAddNewPositionsToShift,
+  addWerker,
 };
