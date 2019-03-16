@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable no-unused-vars */
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -50,9 +52,14 @@ app.get('/shifts/:shiftId', (req, res) => {
 });
 
 // get profile for maker and werker
-app.get('/profile', (req, res) => {
+app.get('/profile/:werkerId', (req, res) => {
   // TODO what to put in here...?
-  res.send('meow');
+  dbHelpers.getWerkerProfile(req.params.werkerId)
+    .then(profile => res.json(200, profile))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'something went wrong!');
+    });
 });
 
 // get list of werkers by terms
@@ -78,14 +85,14 @@ app.get('/werkers', (req, res) => {
  *  bio
  *  phone
  *  last_minute
- *  lat
- *  long
+ *  certifications[]
+ *  positions[]
  * creates new resource in db
  * sends back new db record
  */
 
 app.put('/werkers', (req, res) => {
-  models.Werker.create(req.body)
+  dbHelpers.addWerker(req.body)
     .then(newWerker => res.json(201, newWerker))
     .catch((err) => {
       console.error(err);
@@ -128,7 +135,7 @@ app.put('/shifts/:shiftId/invite', (req, res) => {
 });
 
 app.put('/auth', (req, res) => {
-  const { tokens } = google
+  const { tokens } = google;
 });
 
 // create shift
