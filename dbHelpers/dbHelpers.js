@@ -153,6 +153,32 @@ const getShiftsBySearchTermsAndVals = data => db.models.ShiftPosition.find({
 });
 
 /**
+ * attaches a found werker's certifications and positions
+ *
+ * @param {Object[]} werkers - Array of werker objects from SQL query
+ * @returns {Promise<Object[]>} - Modified input array
+ */
+
+const appendCertsAndPositionsToWerkers = werkers => Promise.all(werkers.map(werker => db.sequelize.query(`
+      SELECT c.*, wc.*
+      FROM "Certifications" c
+      INNER JOIN "WerkerCertifications" wc
+      ON c.id=wc."CertificationId"
+      INNER JOIN "Werkers" w
+      ON w.id=wc."WerkerId"
+      WHERE w.id=?`, { replacements: [werker.id] })
+  .then(certifications => Object.assign(werker, { certifications: certifications[0] }))
+  .then(werkerWithCerts => db.sequelize.query(`
+      SELECT p.position
+      FROM "Positions" p
+      INNER JOIN "WerkerPosition" wp
+      ON p.id=wp."PositionId"
+      INNER JOIN "Werkers" w
+      ON w.id=wp."WerkerId"
+      WHERE w.id=?`, { replacements: [werkerWithCerts.id] })
+    .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] })))));
+
+/**
  * Function to search for werkers by position
  * @param {object} data - an object with search terms
  */
@@ -181,24 +207,27 @@ INNER JOIN "ShiftPositions" sp
 WHERE sp."ShiftId"=?`, { replacements: [id] })
   .then((queryResult) => {
     const fetchedWerkers = queryResult[0];
-    return Promise.all(fetchedWerkers.map(werker => db.sequelize.query(`
-      SELECT c.*, wc.*
-      FROM "Certifications" c
-      INNER JOIN "WerkerCertifications" wc
-      ON c.id=wc."CertificationId"
-      INNER JOIN "Werkers" w
-      ON w.id=wc."WerkerId"
-      WHERE w.id=?`, { replacements: [werker.id] })
-      .then(certifications => Object.assign(werker, { certifications: certifications[0] }))
-      .then(werkerWithCerts => db.sequelize.query(`
-      SELECT p.position
-      FROM "Positions" p
-      INNER JOIN "WerkerPosition" wp
-      ON p.id=wp."PositionId"
-      INNER JOIN "Werkers" w
-      ON w.id=wp."WerkerId"
-      WHERE w.id=?`, { replacements: [werkerWithCerts.id] })
-        .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] })))));
+    return appendCertsAndPositionsToWerkers(fetchedWerkers);
+  });
+
+/**
+ * gets all werkers with a specific position
+ * executes raw SQL query for convenience (sometimes it's just easier!)
+ *
+ * @param {string} position - the position name by which to search
+ */
+
+const getWerkersByPosition = position => db.sequelize.query(`
+  SELECT w.*
+    FROM "Werkers" w
+  INNER JOIN "WerkerPosition" wp
+    ON w.id=wp."WerkerId"
+  INNER JOIN "Positions" p
+    ON p.id=wp."PositionId"
+  WHERE p.position=?`, { replacements: [position] })
+  .then((queryResult) => {
+    const fetchedWerkers = queryResult[0];
+    return appendCertsAndPositionsToWerkers(fetchedWerkers);
   });
 
 /**
@@ -315,4 +344,5 @@ module.exports = {
   bulkAddCertificationToWerker,
   bulkAddPositionToWerker,
   getWerkersForShift,
+  getWerkersByPosition,
 };

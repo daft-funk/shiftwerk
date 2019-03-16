@@ -72,6 +72,16 @@ app.get('/werkers/:werkerId', (req, res) => {
     });
 });
 
+// get werkers by position
+app.get('/werkers/search/:positionName', (req, res) => {
+  dbHelpers.getWerkersByPosition(req.params.positionName)
+    .then(werkers => res.json(200, werkers))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'something went wrong!');
+    });
+});
+
 // get list of werkers by terms
 app.get('/werkers', (req, res) => {
   // TODO check helper function name
