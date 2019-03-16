@@ -51,9 +51,8 @@ app.get('/shifts/:shiftId', (req, res) => {
     });
 });
 
-// get profile for maker and werker
-app.get('/profile/:werkerId', (req, res) => {
-  // TODO what to put in here...?
+// get profile for werker
+app.get('/werkers/:werkerId', (req, res) => {
   dbHelpers.getWerkerProfile(req.params.werkerId)
     .then(profile => res.json(200, profile))
     .catch((err) => {
