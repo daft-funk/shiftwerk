@@ -9,10 +9,12 @@ const db = require('../db/index');
 const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
   .map(position => db.models.Position.upsert(position, { returning: true })
     // eslint-disable-next-line no-unused-vars
-    .then(([newPosition, updated]) => db.models.ShiftPosition.create({
+    .then(([newPosition, updated]) => db.models.ShiftPosition.upsert({
       ShiftId: shift.id,
       PositionId: newPosition.id,
       payment_amnt: position.payment_amnt,
+    }, {
+      returning: true,
     }))));
 /**
  * Function used to create a new shift
@@ -58,10 +60,12 @@ const createShift = ({
 const bulkAddCertificationToWerker = (werker, certifications) => Promise.all(certifications
   .map(certification => db.models.Certification.upsert(certification, { returning: true })
     // eslint-disable-next-line no-unused-vars
-    .then(([newCert, updated]) => db.models.WerkerCertification.create({
+    .then(([newCert, updated]) => db.models.WerkerCertification.upsert({
       WerkerId: werker.id,
       CertificationId: newCert.id,
       url_Photo: certification.url_Photo,
+    }, {
+      returning: true,
     }))));
 
 /**
@@ -74,10 +78,7 @@ const bulkAddCertificationToWerker = (werker, certifications) => Promise.all(cer
 const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
   .map(position => db.models.Position.upsert(position, { returning: true })
     // eslint-disable-next-line no-unused-vars
-    .then(([newPosition, updated]) => db.models.WerkerPosition.create({
-      WerkerId: werker.id,
-      PositionId: newPosition.id,
-    }))));
+    .then(([newPosition, updated]) => newPosition.addWerker(werker))));
 
 /**
  * adds new werker to DB, including certifications and positions
@@ -92,12 +93,13 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
  * @param {boolean} info.last_minute
  * @param {Object[]} info.certifications
  * @param {string} info.certifications.cert_name
- * @param {string} info.certifications.url_photo
+ * @param {string} info.certifications.url_Photo
  * @param {Object[]} info.positions
  * @param {string} info.positions.position
  */
-const addWerker = info => db.models.create(info)
-  .then(newWerker => bulkAddCertificationToWerker(newWerker, info.certifications));
+const addWerker = info => db.models.Werker.upsert(info, { returning: true })
+  .then(([newWerker, updated]) => bulkAddCertificationToWerker(newWerker, info.certifications)
+    .then(() => bulkAddPositionToWerker(newWerker, info.positions)));
 
 /**
  * Function used to apply for a shift - updates the shift status to 'Pending'
@@ -184,7 +186,6 @@ const getWerkerProfile = id => db.models.Werker.findOne({
       model: db.models.Certification,
       attributes: [
         'cert_name',
-        'url_Photo',
       ],
     },
     {
