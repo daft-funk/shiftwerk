@@ -8,7 +8,7 @@ module.exports = (sequelize, DataTypes) => {
       through: 'WerkerPosition',
     });
     Position.belongsToMany(models.Shift, {
-      through: 'ShiftPosition',
+      through: models.ShiftPosition,
     });
   };
   return Position;

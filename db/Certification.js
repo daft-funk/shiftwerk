@@ -1,6 +1,6 @@
 module.exports = (sequelize, DataTypes) => {
   const Certification = sequelize.define('Certification', {
-    cert_name: DataTypes.STRING,
+    cert_name: { type: DataTypes.STRING, unique: true, allowNull: false },
   });
 
   Certification.associate = (models) => {
