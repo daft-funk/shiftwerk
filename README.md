@@ -29,26 +29,49 @@ shiftWerk is a community shift planning application that connects shift workers 
 ## Requirements
 
 - Node 8.15.0
-- postgreSQL VERSION !!!
-- 
+- Express 4.16.4
+- PostgreSQL 7.8.2
+- Angular 7.20
+- Ionic/angular 1.4.0
 
 ## Development
 
 Client Files:
+Home: 
+- home.page - entry point for new user, werker, maker
 
-- index. - main app component
+New User:
+- new-user.page - login for new user(s)
 
-- Nav - components with the navigation bar
+!!! User: (!!! we can't reuse components so these should be redistributed to werker & maker directories)
+- history, notifications, pendingshifts, schedule, 
 
-- UserLogin - component for logging in the user
+Maker:
+- maker-home - maker sees 3 shift views:  
+  - maker-unfilled-shifts - upcoming shifts (open positions available)
+  - maker-pending-shifts - maker views upcoming shifts (positions filled)
+  - maker-history-shifts - maker views past shifts, including werkers & their ratings
 
-- werkerProfile - component responsible for new Werker profile
+- maker-create-shift - maker create new shift, details, positions needed
+- maker-profile - component for Maker user profile
+- maker-positions - !!! is this to create more positions??? do we need???
+- maker-search - search for werkers to invite to shift
+- maker-settings - opens maker-profile to update/edit/save
+- maker-navbar - bottom navigation(home, profile, ...)
 
+Werker:
+- werker-home - werker sees list of 
+  - werker-shift-small - condensed details of pending shifts
+  - werker-shift-expanded - expanded details of pending shift
+- werker-notifications - show shifts werker has been invited to
 
-- makerProfile - component creates a new Maker user profile
-- ViewPlantProfile - component responsible for seeing all the plants profile
-
-
+- werker-profile - component for Werker profile
+  - werker-settings - opens werker-profile from cog to update/save
+- werker-schedule - shows upcoming shifts
+- werker-history - shows past shifts with maker ratings
+- werker-navbar - bottom navigation
+- werker-search - search for shifts
+ 
 Back-end Files:
 
 - database/index.js - the database configuration
