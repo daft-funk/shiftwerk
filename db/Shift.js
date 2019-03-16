@@ -15,11 +15,11 @@ module.exports = (sequelize, DataTypes) => {
     });
     Shift.belongsToMany(models.Werker, {
       through: 'WerkerShift',
-      foreignKey: 'ShiftId',
+      foreignKey: 'WerkerId',
     });
     Shift.belongsToMany(models.PaymentType, {
       through: 'ShiftPaymentType',
-      foreignKey: 'ShiftId',
+      foreignKey: 'PaymentTypeId',
     });
     Shift.belongsToMany(models.Position, {
       through: models.ShiftPosition,

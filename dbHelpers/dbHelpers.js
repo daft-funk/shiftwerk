@@ -5,19 +5,47 @@ const db = require('../db/index');
  * Function used to create a new shift
  * @param {string} name - the name of the shift
  * @param {date} time_date - the time and date of the shift
- * @param {numbr} duration - the duration of the shift
- * @param {string} address - the address of the shift
+ * @param {number} duration - the duration of the shift in minutes
  * @param {number} lat - the latitude of the shift
  * @param {number} long - the longitude of the shift
- * @param {number} payment_amnt - the amount of money the shift is paying
  * @param {string} description - a short description of the shift
- * @param {number} cache_rating - a chached rating
+ * @param {Array<object>} positions - each position object has properties "position" and "payment_amnt"
+ * @param {string} paymentType - what format the pay is in, e.g. cash, digital, check
  */
-const createShift = (name, time_date, duration, address, lat, long, payment_amnt, description, cache_rating) => {
-  return db.models.Shift.create({
-    name, time_date, duration, address, lat, long, payment_amnt, description, cache_rating,
-  });
-};
+const createShift = ({
+  MakerId,
+  name,
+  time_date,
+  duration,
+  lat,
+  long,
+  positions,
+  description,
+  paymentType,
+}) => db.models.Shift.create({
+  MakerId,
+  name,
+  time_date,
+  duration,
+  lat,
+  long,
+  description,
+})
+  .then(newShift => Promise.all([
+    positions.map(position => newShift.addPosition(
+      db.models.Position.build({
+        position: position.position,
+      }), {
+        through: {
+          payment_amnt: position.payment_amnt,
+        },
+      },
+    )),
+    newShift.addPaymentType(db.models.PaymentType.build({
+      name: paymentType,
+    })),
+  ]));
+
 
 /**
  * Function used to apply for a shift - updates the shift status to 'Pending'
