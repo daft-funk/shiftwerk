@@ -1,3 +1,5 @@
+/* eslint-disable no-console */
+/* eslint-disable no-unused-vars */
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -17,6 +19,10 @@ app.use(cors());
 
 const { models } = require('../db/index');
 
+const errorHandler = (err, res) => {
+  console.error(err);
+  res.send(500, 'Something went wrong!');
+};
 
 app.get('/', (req, res) => {
   res.send("I'm connected!");
@@ -57,6 +63,37 @@ app.get('/profile', (req, res) => {
   res.send('PUT SOMETHING IN PROFILE');
 });
 
+// get werkers eligible for invitation to shift
+app.get('/shifts/:shiftId/invite', (req, res) => {
+  const { shiftId } = req.params;
+  dbHelpers.getWerkersForShift(shiftId)
+    .then(werkers => res.json(200, werkers))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
+    });
+});
+
+// get profile for werker
+app.get('/werkers/:werkerId', (req, res) => {
+  dbHelpers.getWerkerProfile(req.params.werkerId)
+    .then(profile => res.json(200, profile))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'something went wrong!');
+    });
+});
+
+// get werkers by position
+app.get('/werkers/search/:positionName', (req, res) => {
+  dbHelpers.getWerkersByPosition(req.params.positionName)
+    .then(werkers => res.json(200, werkers))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'something went wrong!');
+    });
+});
+
 // get list of werkers by terms
 app.get('/werkers', (req, res) => {
   // TODO check helper function name
@@ -70,6 +107,13 @@ app.get('/werkers', (req, res) => {
     });
 });
 
+app.get('/werkers/:werkerId/allShifts', (req, res) => {
+  const { werkerId } = req.params;
+  dbHelpers.getShiftsForWerker(werkerId)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err));
+});
+
 /**
  * PUT /werkers
  * expects body with following properties:
@@ -80,14 +124,14 @@ app.get('/werkers', (req, res) => {
  *  bio
  *  phone
  *  last_minute
- *  lat
- *  long
+ *  certifications[]
+ *  positions[]
  * creates new resource in db
  * sends back new db record
  */
 
 app.put('/werkers', (req, res) => {
-  models.Werker.create(req.body)
+  dbHelpers.addWerker(req.body)
     .then(newWerker => res.json(201, newWerker))
     .catch((err) => {
       console.error(err);
@@ -115,6 +159,15 @@ app.put('/makers', (req, res) => {
     });
 });
 
+app.get('/makers/:makerId', (req, res) => {
+  models.Maker.findOne({ where: { id: req.params.makerId } })
+    .then(maker => res.json(201, maker))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
+    });
+});
+
 // invite werkers
 app.put('/shifts/:shiftId/invite', (req, res) => {
   const shiftId = JSON.parse(req.params.shiftId);
@@ -130,7 +183,7 @@ app.put('/shifts/:shiftId/invite', (req, res) => {
 });
 
 app.put('/auth', (req, res) => {
-  const { tokens } = google
+  const { tokens } = google;
 });
 
 // create shift
