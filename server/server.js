@@ -19,6 +19,10 @@ app.use(cors());
 
 const { models } = require('../db/index');
 
+const errorHandler = (err, res) => {
+  console.error(err);
+  res.send(500, 'Something went wrong!');
+};
 
 app.get('/', (req, res) => {
   res.send("I'm connected!");
@@ -93,6 +97,13 @@ app.get('/werkers', (req, res) => {
       console.log(error, 'unable to get werkers');
       res.status(500).send('unable to get werkers');
     });
+});
+
+app.get('/werkers/:werkerId/allShifts', (req, res) => {
+  const { werkerId } = req.params;
+  dbHelpers.getShiftsForWerker(werkerId)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err));
 });
 
 /**
