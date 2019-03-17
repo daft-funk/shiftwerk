@@ -318,6 +318,38 @@ const getAllShifts = (offset = 0) => db.models.Shift.findAll({
 });
 
 /**
+ * appends maker info to any number of shifts
+ *
+ * @param {Object[]} shifts - Shift instances from DB
+ */
+const appendMakerToShifts = shifts => Promise.all(shifts.map(shift => db.sequelize.query(`
+  SELECT m.* from "Makers" m, "Shifts" s
+  WHERE m.id=s."MakerId"`)
+  .then(maker => Object.assign(shift, { maker: maker[0] }))));
+
+/**
+ * fetches all shifts werker is eligible for based on positions
+ *
+ * @param {number} id - the werker ID from DB
+ */
+const getShiftsForWerker = id => db.sequelize.query(`
+SELECT s.*
+FROM "Shifts" s
+INNER JOIN "ShiftPositions" sp
+  ON s.id=sp."ShiftId"
+INNER JOIN "Positions" p
+  ON p.id=sp."PositionId"
+INNER JOIN "WerkerPosition" wp
+  ON p.id=wp."PositionId"
+INNER JOIN "Werkers" w
+  ON w.id=wp."WerkerId"
+WHERE w.id=?`, { replacements: [id] })
+  .then((queryResult) => {
+    const fetchedShifts = queryResult[0];
+    return appendMakerToShifts(fetchedShifts);
+  });
+
+/**
  * deletes a shift from the database by id
  *
  * @param {number} id
@@ -345,4 +377,5 @@ module.exports = {
   bulkAddPositionToWerker,
   getWerkersForShift,
   getWerkersByPosition,
+  getShiftsForWerker,
 };
