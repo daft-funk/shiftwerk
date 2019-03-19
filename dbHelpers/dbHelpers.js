@@ -2,52 +2,33 @@
 // const sequelize = require('sequelize');
 const db = require('../db/index');
 
+// WERKER
+
 /**
- * Adds an array of items to Positions table or updates if they exist
- * @param {Object} positions - key: position, val: string, key: payment_amnt, val: Number
+ * attaches a found werker's certifications and positions
+ *
+ * @param {Object[]} werkers - Array of werker objects from SQL query
+ * @returns {Promise<Object[]>} - Modified input array
  */
-const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
-  .map(position => db.models.Position.upsert(position, { returning: true })
-    // eslint-disable-next-line no-unused-vars
-    .then(([newPosition, updated]) => db.models.ShiftPosition.upsert({
-      ShiftId: shift.id,
-      PositionId: newPosition.id,
-      payment_amnt: position.payment_amnt,
-    }, {
-      returning: true,
-    }))));
-/**
- * Function used to create a new shift
- * @param {string} name - the name of the shift
- * @param {date} time_date - the time and date of the shift
- * @param {number} duration - the duration of the shift in minutes
- * @param {number} lat - the latitude of the shift
- * @param {number} long - the longitude of the shift
- * @param {string} description - a short description of the shift
- * @param {Array<object>} positions - has properties "position" and "payment_amnt"
- * @param {string} payment_type - what format the pay is in, e.g. cash, digital, check
- */
-const createShift = ({
-  MakerId,
-  name,
-  time_date,
-  duration,
-  lat,
-  long,
-  description,
-  positions,
-  payment_type,
-}) => db.models.Shift.create({
-  MakerId,
-  name,
-  time_date,
-  duration,
-  lat,
-  long,
-  description,
-  payment_type,
-})
-  .then(newShift => bulkAddNewPositionsToShift(newShift, positions));
+
+const appendCertsAndPositionsToWerkers = werkers => Promise.all(werkers.map(werker => db.sequelize.query(`
+      SELECT c.*, wc.*
+      FROM "Certifications" c
+      INNER JOIN "WerkerCertifications" wc
+      ON c.id=wc."CertificationId"
+      INNER JOIN "Werkers" w
+      ON w.id=wc."WerkerId"
+      WHERE w.id=?`, { replacements: [werker.id] })
+  .then(certifications => Object.assign(werker, { certifications: certifications[0] }))
+  .then(werkerWithCerts => db.sequelize.query(`
+      SELECT p.position
+      FROM "Positions" p
+      INNER JOIN "WerkerPosition" wp
+      ON p.id=wp."PositionId"
+      INNER JOIN "Werkers" w
+      ON w.id=wp."WerkerId"
+      WHERE w.id=?`, { replacements: [werkerWithCerts.id] })
+    .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] })))));
 
 /**
  * adds any number of certifications to a werker
@@ -100,83 +81,6 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
 const addWerker = info => db.models.Werker.upsert(info, { returning: true })
   .then(([newWerker, updated]) => bulkAddCertificationToWerker(newWerker, info.certifications)
     .then(() => bulkAddPositionToWerker(newWerker, info.positions)));
-
-/**
- * Function used to apply for a shift - updates the shift status to 'Pending'
- * @param {number} shiftId - the id of the shift to be applied to
- * @param {number} werkerId - the of the werker applying to the shift
- */
-const applyForShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Pending',
-  where: {
-    shiftId,
-    werkerId,
-  },
-});
-
-/**
- * Function used to accept shifts - updates the shift status to 'Accepted'
- * @param {number} shiftId - the id of the shift to be accepted
- * @param {number} werkerId - the id of the werker accepting the shift
- */
-const acceptShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Accepted',
-}, {
-  where: {
-    shiftId,
-    werkerId,
-  },
-});
-
-/**
- * Function to decline shifts - updates the shift status to 'Declined'
- * @param {number} shiftId - the id of shift to be declined
- * @param {number} werkerId - the id of the werker declining the shift
- */
-// function to decline shifts
-const declineShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Declined',
-}, {
-  where: {
-    shiftId,
-    werkerId,
-  },
-});
-
-/**
- * Function to search for shifts by keywords
- * @param {object} data - an object with search terms
- */
-const getShiftsBySearchTermsAndVals = data => db.models.ShiftPosition.find({
-  where: { id: data.PositionId, payment_amnt: data.payment_amnt },
-  include: [db.models.Shift, db.models.Position],
-});
-
-/**
- * attaches a found werker's certifications and positions
- *
- * @param {Object[]} werkers - Array of werker objects from SQL query
- * @returns {Promise<Object[]>} - Modified input array
- */
-
-const appendCertsAndPositionsToWerkers = werkers => Promise.all(werkers.map(werker => db.sequelize.query(`
-      SELECT c.*, wc.*
-      FROM "Certifications" c
-      INNER JOIN "WerkerCertifications" wc
-      ON c.id=wc."CertificationId"
-      INNER JOIN "Werkers" w
-      ON w.id=wc."WerkerId"
-      WHERE w.id=?`, { replacements: [werker.id] })
-  .then(certifications => Object.assign(werker, { certifications: certifications[0] }))
-  .then(werkerWithCerts => db.sequelize.query(`
-      SELECT p.position
-      FROM "Positions" p
-      INNER JOIN "WerkerPosition" wp
-      ON p.id=wp."PositionId"
-      INNER JOIN "Werkers" w
-      ON w.id=wp."WerkerId"
-      WHERE w.id=?`, { replacements: [werkerWithCerts.id] })
-    .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] })))));
 
 /**
  * Function to search for werkers by position
@@ -264,6 +168,106 @@ const getWerkerProfile = id => db.models.Werker.findOne({
       ],
     },
   ],
+});
+
+// SHIFT
+
+/**
+ * Adds an array of items to Positions table or updates if they exist
+ * @param {Object} positions - key: position, val: string, key: payment_amnt, val: Number
+ */
+const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
+  .map(position => db.models.Position.upsert(position, { returning: true })
+    // eslint-disable-next-line no-unused-vars
+    .then(([newPosition, updated]) => db.models.ShiftPosition.upsert({
+      ShiftId: shift.id,
+      PositionId: newPosition.id,
+      payment_amnt: position.payment_amnt,
+    }, {
+      returning: true,
+    }))));
+/**
+ * Function used to create a new shift
+ * @param {string} name - the name of the shift
+ * @param {date} time_date - the time and date of the shift
+ * @param {number} duration - the duration of the shift in minutes
+ * @param {number} lat - the latitude of the shift
+ * @param {number} long - the longitude of the shift
+ * @param {string} description - a short description of the shift
+ * @param {Array<object>} positions - has properties "position" and "payment_amnt"
+ * @param {string} payment_type - what format the pay is in, e.g. cash, digital, check
+ */
+const createShift = ({
+  MakerId,
+  name,
+  time_date,
+  duration,
+  lat,
+  long,
+  description,
+  positions,
+  payment_type,
+}) => db.models.Shift.create({
+  MakerId,
+  name,
+  time_date,
+  duration,
+  lat,
+  long,
+  description,
+  payment_type,
+})
+  .then(newShift => bulkAddNewPositionsToShift(newShift, positions));
+
+/**
+ * Function used to apply for a shift - updates the shift status to 'Pending'
+ * @param {number} shiftId - the id of the shift to be applied to
+ * @param {number} werkerId - the of the werker applying to the shift
+ */
+const applyForShift = (shiftId, werkerId) => db.models.InviteApply.update({
+  status: 'Pending',
+  where: {
+    shiftId,
+    werkerId,
+  },
+});
+
+/**
+ * Function used to accept shifts - updates the shift status to 'Accepted'
+ * @param {number} shiftId - the id of the shift to be accepted
+ * @param {number} werkerId - the id of the werker accepting the shift
+ */
+const acceptShift = (shiftId, werkerId) => db.models.InviteApply.update({
+  status: 'Accepted',
+}, {
+  where: {
+    shiftId,
+    werkerId,
+  },
+});
+
+/**
+ * Function to decline shifts - updates the shift status to 'Declined'
+ * @param {number} shiftId - the id of shift to be declined
+ * @param {number} werkerId - the id of the werker declining the shift
+ */
+// function to decline shifts
+const declineShift = (shiftId, werkerId) => db.models.InviteApply.update({
+  status: 'Declined',
+}, {
+  where: {
+    shiftId,
+    werkerId,
+  },
+});
+
+/**
+ * Function to search for shifts by keywords
+ * @param {object} data - an object with search terms
+ */
+const getShiftsBySearchTermsAndVals = data => db.models.ShiftPosition.find({
+  where: { id: data.PositionId, payment_amnt: data.payment_amnt },
+  include: [db.models.Shift, db.models.Position],
 });
 
 /**
