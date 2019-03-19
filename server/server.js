@@ -262,12 +262,11 @@ app.delete('/shifts/:shiftId', (req, res) => {
     });
 });
 
-app.get('werkers/:werkerId/shifts/available', (req, res) => {
+app.get('/werkers/:werkerId/shifts/available', (req, res) => {
     const { werkerId } = req.params;
     return dbHelpers.getShiftsForWerker(werkerId)
-      .then(shifts => res.json(200, shifts)
+      .then(shifts => res.json(200, shifts))
       .catch(err => errorHandler(err, res));
-  };
 });
 
 

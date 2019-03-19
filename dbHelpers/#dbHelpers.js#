@@ -363,31 +363,6 @@ const deleteShift = id => db.models.Shift.destroy({
   where: { id },
 });
 
-/**
- * gets all shifts a werker has been invited to
- *
- * @param {number} id - werker id from DB
- * @returns {Promise<Object[]>} - An array of Shift objects
- */
-
-const getInvitedShifts = id => db.models.Shift.findAll({
-  include: [
-    {
-      model: db.models.InviteApply,
-      where: { 'status': 'invited' },
-      include: [
-        {
-          model: db.models.Werker,
-          where: { id },
-        },
-      ],
-    }
-  ]
-});
-
-
-
-
 module.exports = {
   getWerkerProfile,
   inviteWerker,
