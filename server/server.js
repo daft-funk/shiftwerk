@@ -11,6 +11,7 @@ const dbHelpers = require('../dbHelpers/dbHelpers.js');
 //   '347712232584-9dv95ud3ilg9bk7vg8i0biqav62fh1q7.apps.googleusercontent.com',
 //   'WBbo3VF1_r9zsOovnfdi0h1Z',
 // );
+const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 
 
 const app = express();
@@ -186,28 +187,22 @@ app.put('/auth', (req, res) => {
  *  name
  *  time_date
  *  duration
- *  lat
- *  long
+ *  address
  *  description
- *  Positions[]
- *   Position is obj with:
+ *  positions[]
+ *   position is obj with:
  *   position
- *   ShiftPosition: obj with:
- *    payment_amnt
- *  PaymentType: obj with:
- *    name
+ *   payment_amnt
+ *  payment_type
  */
-app.put('/shifts', (req, res) => {
+app.put('/shifts', async (req, res) => {
   const { body } = req;
-  // TODO need to make sure im retreiving information correctly
-  dbHelpers.createShift(body)
-    .then(() => {
-      res.send(201);
-    })
-    .catch((error) => {
-      console.log(error, 'unable to create shift');
-      res.send(500);
-    });
+  const { lat, lon } = await geocode(body.address);
+  body.lat = lat;
+  body.long = lon;
+  const shift = await dbHelpers.createShift(body)
+    .catch(err => errorHandler(err, res));
+  res.status(201).json(shift);
 });
 
 // apply or invite for shift
