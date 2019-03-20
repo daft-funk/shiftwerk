@@ -25,47 +25,7 @@ const errorHandler = (err, res) => {
   res.send(500, 'Something went wrong!');
 };
 
-app.get('/', (req, res) => {
-  res.send("I'm connected!");
-});
-
-// // get list of shifts by term and value for werker
-// app.get('/shifts', (req, res) => {
-//   // TODO check helper function name
-//   dbHelpers.getAllShifts()
-//     .then((shifts) => {
-//       res.send(shifts);
-//     })
-//     .catch((error) => {
-//       console.log(error, 'error in getting shifts');
-//       res.status(500).send('error in getting shifts');
-//     });
-// });
-
-// get detailed shift info by Id for maker and werker
-app.get('/shifts/:shiftId', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  // TODO check helper function name
-  dbHelpers.getShiftsById(shiftId)
-    .then((shift) => {
-      res.send(shift);
-    })
-    .catch((error) => {
-      console.log(error, 'unable to get SHIFT');
-      res.status(500).send('unable to get SHIFT!');
-    });
-});
-
-// get werkers eligible for invitation to shift
-app.get('/shifts/:shiftId/invite', (req, res) => {
-  const { shiftId } = req.params;
-  dbHelpers.getWerkersForShift(shiftId)
-    .then(werkers => res.json(200, werkers))
-    .catch((err) => {
-      console.error(err);
-      res.send(500, 'Something went wrong!');
-    });
-});
+// ----WERKER---- ////
 
 // get profile for werker
 app.get('/werkers/:werkerId', (req, res) => {
@@ -85,26 +45,6 @@ app.get('/werkers/search/:positionName', (req, res) => {
       console.error(err);
       res.send(500, 'something went wrong!');
     });
-});
-
-// get list of shifts by terms
-app.get('/shifts', (req, res) => {
-  // TODO check helper function name
-  dbHelpers.getShiftsByTerm(req.query)
-    .then((shifts) => {
-      res.send(shifts);
-    })
-    .catch((error) => {
-      console.log(error, 'unable to get shifts');
-      res.status(500).send('unable to get shifts');
-    });
-});
-
-app.get('/werkers/:werkerId/allShifts', (req, res) => {
-  const { werkerId } = req.params;
-  dbHelpers.getShiftsForWerker(werkerId)
-    .then(shifts => res.json(200, shifts))
-    .catch(err => errorHandler(err));
 });
 
 /**
@@ -132,6 +72,8 @@ app.put('/werkers', (req, res) => {
     });
 });
 
+// ----MAKER---- //
+
 /**
  * PUT /makers
  * expects body with the following properties:
@@ -152,6 +94,7 @@ app.put('/makers', (req, res) => {
     });
 });
 
+// get a maker's profile
 app.get('/makers/:makerId', (req, res) => {
   models.Maker.findOne({ where: { id: req.params.makerId } })
     .then(maker => res.json(201, maker))
@@ -161,25 +104,41 @@ app.get('/makers/:makerId', (req, res) => {
     });
 });
 
-// invite werkers
-app.put('/shifts/:shiftId/invite', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  // TODO need to make sure I'm retreiving information correctly
-  dbHelpers.inviteWerker(shiftId, req.body)
-    .then(() => {
-      res.send(201);
+// ----SHIFT---- //
+
+// WERKER-FACING //
+
+// get list of shifts by terms
+app.get('/shifts', (req, res) => {
+  // TODO check helper function name
+  dbHelpers.getShiftsByTerm(req.query)
+    .then((shifts) => {
+      res.send(shifts);
     })
     .catch((error) => {
-      console.log(error, 'unable to invite werker');
-      res.send(500);
+      console.log(error, 'unable to get shifts');
+      res.status(500).send('unable to get shifts');
     });
 });
 
-app.put('/auth', (req, res) => {
-  const { tokens } = google;
+// gets all shifts a werker is eligible for based on positions
+app.get('/werkers/:werkerId/shifts/available', (req, res) => {
+  const { werkerId } = req.params;
+  return dbHelpers.getShiftsForWerker(werkerId)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err, res));
 });
 
-// create shift
+// gets all shifts for werker based on invite status ('invite' or 'accept')
+app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
+  const { werkerId, status } = req.params;
+  return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// MAKER-FACING //
+
 /**
  * PUT /shifts
  * expects body with the following properties:
@@ -203,6 +162,80 @@ app.put('/shifts', async (req, res) => {
   const shift = await dbHelpers.createShift(body)
     .catch(err => errorHandler(err, res));
   res.status(201).json(shift);
+});
+
+app.delete('/shifts/:shiftId', (req, res) => {
+  const { shiftId } = req.params;
+  return dbHelpers.deleteShift(shiftId)
+    .then(() => res.send(204))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send('unable to delete');
+    });
+});
+
+// get werkers eligible for invitation to shift
+app.get('/shifts/:shiftId/invite', (req, res) => {
+  const { shiftId } = req.params;
+  dbHelpers.getWerkersForShift(shiftId)
+    .then(werkers => res.json(200, werkers))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
+    });
+});
+
+// invite werkers
+app.put('/shifts/:shiftId/invite', (req, res) => {
+  const shiftId = JSON.parse(req.params.shiftId);
+  dbHelpers.inviteWerker(shiftId, req.body)
+    .then(() => {
+      res.send(201);
+    })
+    .catch((error) => {
+      console.log(error, 'unable to invite werker');
+      res.send(500);
+    });
+});
+
+// get applications for a maker's shifts
+app.get('/makers/:makerId/applications', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getApplicationsForShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// get all shifts with any open positions
+app.get('/makers/:makerId/unfulfilled', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getUnfulfilledShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// get all shifts with no open positions
+app.get('/makers/:makerId/fulfilled', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getFulfilledShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// MAKER/WERKER //
+
+// get detailed shift info by Id for maker and werker
+app.get('/shifts/:shiftId', (req, res) => {
+  const shiftId = JSON.parse(req.params.shiftId);
+  // TODO check helper function name
+  dbHelpers.getShiftsById(shiftId)
+    .then((shift) => {
+      res.send(shift);
+    })
+    .catch((error) => {
+      console.log(error, 'unable to get SHIFT');
+      res.status(500).send('unable to get SHIFT!');
+    });
 });
 
 // apply or invite for shift
@@ -232,49 +265,8 @@ app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
     });
 });
 
-app.delete('/shifts/:shiftId', (req, res) => {
-  const { shiftId } = req.params;
-  return dbHelpers.deleteShift(shiftId)
-    .then(() => res.send(204))
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send('unable to delete');
-    });
-});
-
-app.get('/werkers/:werkerId/shifts/available', (req, res) => {
-  const { werkerId } = req.params;
-  return dbHelpers.getShiftsForWerker(werkerId)
-    .then(shifts => res.json(200, shifts))
-    .catch(err => errorHandler(err, res));
-});
-
-app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
-  const { werkerId, status } = req.params;
-  return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
-    .then(shifts => res.json(200, shifts))
-    .catch(err => errorHandler(err, res));
-});
-
-app.get('/makers/:makerId/applications', (req, res) => {
-  const { makerId } = req.params;
-  return dbHelpers.getApplicationsForShifts(makerId)
-    .then(shifts => res.status(200).json(shifts))
-    .catch(err => errorHandler(err, res));
-});
-
-app.get('/makers/:makerId/unfulfilled', (req, res) => {
-  const { makerId } = req.params;
-  return dbHelpers.getUnfulfilledShifts(makerId)
-    .then(shifts => res.status(200).json(shifts))
-    .catch(err => errorHandler(err, res));
-});
-
-app.get('/makers/:makerId/fulfilled', (req, res) => {
-  const { makerId } = req.params;
-  return dbHelpers.getFulfilledShifts(makerId)
-    .then(shifts => res.status(200).json(shifts))
-    .catch(err => errorHandler(err, res));
+app.put('/auth', (req, res) => {
+  const { tokens } = google;
 });
 
 const port = process.env.PORT || 4000;
