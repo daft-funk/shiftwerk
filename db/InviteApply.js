@@ -8,9 +8,8 @@ module.exports = (sequelize, DataTypes) => {
   });
 
   InviteApply.associate = (models) => {
-    InviteApply.belongsTo(models.Shift);
     InviteApply.belongsTo(models.Werker);
-    InviteApply.belongsTo(models.Position);
+    InviteApply.hasOne(models.ShiftPosition);
   };
   return InviteApply;
 };
