@@ -221,43 +221,35 @@ const createShift = ({
 
 /**
  * Function used to apply for a shift - updates the shift status to 'Pending'
+ *
  * @param {number} shiftId - the id of the shift to be applied to
- * @param {number} werkerId - the of the werker applying to the shift
+ * @param {number} werkerId - the id of the werker applying or being invited to the shift
+ * @param {number} positionName - the name of the position applied or invited to
+ * @param {string} inviteOrApply - either "invite" or "apply" signifying
+ * invitation from maker or application from werker
  */
-const applyForShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Pending',
-  where: {
-    shiftId,
-    werkerId,
-  },
-});
+
+const applyOrInviteForShift = (shiftId, werkerId, positionName, inviteOrApply) => db.sequelize.query(`
+SELECT id FROM "Positions" WHERE position='${positionName}'`)
+  .then(([position, metadata]) => db.sequelize.query(`
+INSERT INTO "InviteApplies" ("WerkerId",
+"ShiftPositionShiftId", 
+"ShiftPositionPositionId", 
+"createdAt", 
+"updatedAt", 
+"type") VALUES (${werkerId}, ${shiftId}, ${position[0].id}, 'now', 'now', '${inviteOrApply}')`));
 
 /**
  * Function used to accept shifts - updates the shift status to 'Accepted'
  * @param {number} shiftId - the id of the shift to be accepted
  * @param {number} werkerId - the id of the werker accepting the shift
  */
-const acceptShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Accepted',
+const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteApply.update({
+  status,
 }, {
   where: {
-    shiftId,
-    werkerId,
-  },
-});
-
-/**
- * Function to decline shifts - updates the shift status to 'Declined'
- * @param {number} shiftId - the id of shift to be declined
- * @param {number} werkerId - the id of the werker declining the shift
- */
-// function to decline shifts
-const declineShift = (shiftId, werkerId) => db.models.InviteApply.update({
-  status: 'Declined',
-}, {
-  where: {
-    shiftId,
-    werkerId,
+    ShiftPositionShiftId: shiftId,
+    WerkerId: werkerId,
   },
 });
 
@@ -406,12 +398,24 @@ WHERE ia.status = 'pending' AND ia.type = 'applied' AND m.id=?`,
 { replacements: [id] })
   .then(queryResult => queryResult[0]);
 
+/**
+ * Gets all shifts that have some unfilled positions for a maker
+ *
+ * @param {number} id - maker ID from DB
+ */
+
 const getUnfulfilledShifts = id => db.sequelize.query(`
 SELECT DISTINCT s.* FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
 ON s.id=sp."ShiftId"
 WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
   .then(queryResult => queryResult[0]);
+
+/**
+ * Gets all shifts that have no unfilled positions for a maker
+ *
+ * @param {number} id - maker ID from DB
+ */
 
 const getFulfilledShifts = id => db.sequelize.query(`
 SELECT DISTINCT s.* FROM "Shifts" s
@@ -425,10 +429,9 @@ module.exports = {
   inviteWerker,
   getWerkersByTerm,
   getShiftsBySearchTermsAndVals,
-  declineShift,
-  acceptShift,
+  acceptOrDeclineShift,
   createShift,
-  applyForShift,
+  applyOrInviteForShift,
   getShiftsById,
   getAllShifts,
   deleteShift,

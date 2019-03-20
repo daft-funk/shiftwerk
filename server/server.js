@@ -210,11 +210,11 @@ app.put('/shifts', (req, res) => {
     });
 });
 
-// apply for shift
-app.put('/shifts/:shiftId/application', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  // TODO check name of helper function
-  dbHelpers.applyForShift(shiftId)
+// apply or invite for shift
+// applyOrInvite must be string "apply" or "invite"
+app.put('/shifts/:shiftId/:applyOrInvite/:werkerId/:positionName', (req, res) => {
+  const { shiftId, applyOrInvite, werkerId, positionName } = req.params;
+  dbHelpers.applyOrInviteForShift(shiftId, werkerId, positionName, applyOrInvite)
     .then(() => {
       res.send(201);
     })
@@ -225,31 +225,16 @@ app.put('/shifts/:shiftId/application', (req, res) => {
 });
 
 // accept or decline shift
-app.patch('/shifts/:shiftId/application', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  const { status, werkerId } = req.body;
-  // NEED TO GET WERKER Id
-  // need to find out if accessing status correctly
-  // TODO check name of helper function
-  if (status === true) {
-    dbHelpers.acceptShift(shiftId, werkerId)
-      .then(() => {
-        res.send(204);
-      })
-      .catch((error) => {
-        console.log(error, 'unable to accept');
-        res.status(500).send('unable to accept');
-      });
-  } else if (status === false) {
-    dbHelpers.declineShift(shiftId, werkerId)
-      .then(() => {
-        res.send(204);
-      })
-      .catch((error) => {
-        console.log(error, 'unable to decline');
-        res.status(500).send('unable to decline');
-      });
-  }
+app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
+  const { shiftId, werkerId, status } = req.params;
+  dbHelpers.acceptOrDeclineShift(shiftId, werkerId, status)
+    .then(() => {
+      res.send(204);
+    })
+    .catch((error) => {
+      console.log(error, 'unable to accept/decline');
+      res.status(500).send('unable to accept/decline');
+    });
 });
 
 app.delete('/shifts/:shiftId', (req, res) => {
