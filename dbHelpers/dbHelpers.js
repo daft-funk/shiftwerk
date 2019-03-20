@@ -240,7 +240,7 @@ INSERT INTO "InviteApplies" ("WerkerId",
 "type") VALUES (${werkerId}, ${shiftId}, ${position[0].id}, 'now', 'now', '${inviteOrApply}')`));
 
 /**
- * Function used to accept shifts - updates the shift status to 'Accepted'
+ * Function used to accept shifts - updates the shift status to 'accept' or 'decline'
  * @param {number} shiftId - the id of the shift to be accepted
  * @param {number} werkerId - the id of the werker accepting the shift
  */
@@ -251,6 +251,18 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
     ShiftPositionShiftId: shiftId,
     WerkerId: werkerId,
   },
+  returning: true,
+}).then((updated) => {
+  const updatedEntry = updated[1][0].dataValues;
+  if (status === 'decline') {
+    return updatedEntry;
+  } else {
+    return db.sequelize.query(`
+    UPDATE "ShiftPositions" sp
+    SET filled=true
+    WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
+      .then(([updated, metadata]) => updated);
+  }
 });
 
 /**
