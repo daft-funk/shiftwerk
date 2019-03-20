@@ -210,11 +210,11 @@ app.put('/shifts', (req, res) => {
     });
 });
 
-// apply for shift
-app.put('/shifts/:shiftId/application', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  // TODO check name of helper function
-  dbHelpers.applyForShift(shiftId)
+// apply or invite for shift
+// applyOrInvite must be string "apply" or "invite"
+app.put('/shifts/:shiftId/:applyOrInvite/:werkerId/:positionName', (req, res) => {
+  const { shiftId, applyOrInvite, werkerId, positionName } = req.params;
+  dbHelpers.applyOrInviteForShift(shiftId, werkerId, positionName, applyOrInvite)
     .then(() => {
       res.send(201);
     })
@@ -225,31 +225,16 @@ app.put('/shifts/:shiftId/application', (req, res) => {
 });
 
 // accept or decline shift
-app.patch('/shifts/:shiftId/application', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  const { status, werkerId } = req.body;
-  // NEED TO GET WERKER Id
-  // need to find out if accessing status correctly
-  // TODO check name of helper function
-  if (status === true) {
-    dbHelpers.acceptShift(shiftId, werkerId)
-      .then(() => {
-        res.send(204);
-      })
-      .catch((error) => {
-        console.log(error, 'unable to accept');
-        res.status(500).send('unable to accept');
-      });
-  } else if (status === false) {
-    dbHelpers.declineShift(shiftId, werkerId)
-      .then(() => {
-        res.send(204);
-      })
-      .catch((error) => {
-        console.log(error, 'unable to decline');
-        res.status(500).send('unable to decline');
-      });
-  }
+app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
+  const { shiftId, werkerId, status } = req.params;
+  dbHelpers.acceptOrDeclineShift(shiftId, werkerId, status)
+    .then(() => {
+      res.send(204);
+    })
+    .catch((error) => {
+      console.log(error, 'unable to accept/decline');
+      res.status(500).send('unable to accept/decline');
+    });
 });
 
 app.delete('/shifts/:shiftId', (req, res) => {
@@ -270,10 +255,31 @@ app.get('/werkers/:werkerId/shifts/available', (req, res) => {
 });
 
 app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
-    const { werkerId, status } = req.params;
-    return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
-        .then(shifts => res.json(200, shifts))
-        .catch(err => errorHandler(err, res));
+  const { werkerId, status } = req.params;
+  return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+app.get('/makers/:makerId/applications', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getApplicationsForShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+app.get('/makers/:makerId/unfulfilled', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getUnfulfilledShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+app.get('/makers/:makerId/fulfilled', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getFulfilledShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
 });
 
 const port = process.env.PORT || 4000;
