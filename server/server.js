@@ -283,6 +283,20 @@ app.get('/makers/:makerId/applications', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
+app.get('/makers/:makerId/unfulfilled', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getUnfulfilledShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+app.get('/makers/:makerId/fulfilled', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getFulfilledShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
 const port = process.env.PORT || 4000;
 // models.sequelize.sync();
 

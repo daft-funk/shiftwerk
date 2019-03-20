@@ -386,6 +386,12 @@ WHERE w.id=? AND ia.status=? AND ia.type=?`, { replacements: [id, status, type] 
     return appendMakerToShifts(fetchedShifts);
   });
 
+/**
+ * receives werker and shift info for every pending application
+ *
+ * @param {number} id - maker ID from DB
+ */
+
 const getApplicationsForShifts = id => db.sequelize.query(`
 SELECT w.*, s.* FROM "Werkers" w
 INNER JOIN "InviteApplies" ia
@@ -397,8 +403,22 @@ ON s.id=sp."ShiftId"
 INNER JOIN "Makers" m
 ON m.id=s."MakerId"
 WHERE ia.status = 'pending' AND ia.type = 'applied' AND m.id=?`,
-{ replacements: [id] }
-);
+{ replacements: [id] })
+  .then(queryResult => queryResult[0]);
+
+const getUnfulfilledShifts = id => db.sequelize.query(`
+SELECT DISTINCT s.* FROM "Shifts" s
+INNER JOIN "ShiftPositions" sp
+ON s.id=sp."ShiftId"
+WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
+  .then(queryResult => queryResult[0]);
+
+const getFulfilledShifts = id => db.sequelize.query(`
+SELECT DISTINCT s.* FROM "Shifts" s
+INNER JOIN "ShiftPositions" sp
+ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
+WHERE s."MakerId"=?`, { replacements: [id] })
+  .then(queryResult => queryResult[0]);
 
 module.exports = {
   getWerkerProfile,
@@ -421,4 +441,6 @@ module.exports = {
   getShiftsForWerker,
   getInvitedOrAcceptedShifts,
   getApplicationsForShifts,
+  getUnfulfilledShifts,
+  getFulfilledShifts,
 };
