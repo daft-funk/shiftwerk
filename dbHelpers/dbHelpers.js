@@ -368,20 +368,37 @@ const deleteShift = id => db.models.Shift.destroy({
  *
  * @param {number} id - werker id from DB
  * @param {string} status - either 'pending' or 'accept'
+ * @param {string} type - either 'invite' or 'apply'
  * @returns {Promise<Object[]>} - An array of Shift objects
  */
 
-const getInvitedOrAcceptedShifts = (id, status) => db.sequelize.query(`
+const getInvitedOrAcceptedShifts = (id, status, type) => db.sequelize.query(`
 SELECT * FROM "Shifts" s
+INNER JOIN "ShiftPositions" sp
+ON s.id=sp."ShiftId"
 INNER JOIN "InviteApplies" ia
-ON s.id=ia."ShiftId"
+ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionPositionId"
 INNER JOIN "Werkers" w
 ON w.id=ia."WerkerId"
-WHERE w.id=? AND ia.status=? AND ia.type='invite'`, { replacements: [id, status] })
+WHERE w.id=? AND ia.status=? AND ia.type=?`, { replacements: [id, status, type] })
   .then(queryResult => {
     const fetchedShifts = queryResult[0];
     return appendMakerToShifts(fetchedShifts);
   });
+
+const getApplicationsForShifts = id => db.sequelize.query(`
+SELECT w.*, s.* FROM "Werkers" w
+INNER JOIN "InviteApplies" ia
+ON w.id=ia."WerkerId"
+INNER JOIN "ShiftPositions" sp
+ON sp."ShiftId"=ia."ShiftPositionShiftId AND sp."PositionId"=ia."ShiftPositionPositionId"
+INNER JOIN "Shifts" s
+ON s.id=sp."ShiftId"
+INNER JOIN "Makers" m
+ON m.id=s."MakerId"
+WHERE ia.status = 'pending' AND ia.type = 'applied' AND m.id=?`,
+{ replacements: [id] }
+);
 
 module.exports = {
   getWerkerProfile,
@@ -403,4 +420,5 @@ module.exports = {
   getWerkersByPosition,
   getShiftsForWerker,
   getInvitedOrAcceptedShifts,
+  getApplicationsForShifts,
 };

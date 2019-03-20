@@ -270,10 +270,17 @@ app.get('/werkers/:werkerId/shifts/available', (req, res) => {
 });
 
 app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
-    const { werkerId, status } = req.params;
-    return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
-        .then(shifts => res.json(200, shifts))
-        .catch(err => errorHandler(err, res));
+  const { werkerId, status } = req.params;
+  return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+app.get('/makers/:makerId/applications', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getApplicationsForShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
 });
 
 const port = process.env.PORT || 4000;
