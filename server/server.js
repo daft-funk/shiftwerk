@@ -244,7 +244,12 @@ app.get('/shifts/:shiftId', (req, res) => {
 // apply or invite for shift
 // applyOrInvite must be string "apply" or "invite"
 app.put('/shifts/:shiftId/:applyOrInvite/:werkerId/:positionName', (req, res) => {
-  const { shiftId, applyOrInvite, werkerId, positionName } = req.params;
+  const {
+    shiftId,
+    applyOrInvite,
+    werkerId,
+    positionName,
+  } = req.params;
   dbHelpers.applyOrInviteForShift(shiftId, werkerId, positionName, applyOrInvite)
     .then(() => {
       res.send(201);
