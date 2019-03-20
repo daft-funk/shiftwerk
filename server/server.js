@@ -247,6 +247,7 @@ app.delete('/shifts/:shiftId', (req, res) => {
     });
 });
 
+// get all shifts a werker is eligible for based on positions
 app.get('/werkers/:werkerId/shifts/available', (req, res) => {
     const { werkerId } = req.params;
     return dbHelpers.getShiftsForWerker(werkerId)
@@ -254,13 +255,25 @@ app.get('/werkers/:werkerId/shifts/available', (req, res) => {
       .catch(err => errorHandler(err, res));
 });
 
-app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
-  const { werkerId, status } = req.params;
-  return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
+// histOrUpcoming is either 'history' or 'upcoming'
+// status is 'accept'
+// histOrUpcoming does not apply if status is 'invite'
+app.get('/werkers/:werkerId/shifts/:histOrUpcoming', (req, res) => {
+  const { werkerId, histOrUpcoming } = req.params;
+  return dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
     .then(shifts => res.json(200, shifts))
     .catch(err => errorHandler(err, res));
 });
 
+// get all shifts werker is invited to
+app.get('/werkers/:werkerId/invitations', (req, res) => {
+  const { werkerId } = req.params;
+  return dbHelpers.getInvitedShifts(werkerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// get all applications to a maker's shifts
 app.get('/makers/:makerId/applications', (req, res) => {
   const { makerId } = req.params;
   return dbHelpers.getApplicationsForShifts(makerId)
@@ -268,6 +281,7 @@ app.get('/makers/:makerId/applications', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
+// get all unfulfilled shifts of a maker
 app.get('/makers/:makerId/unfulfilled', (req, res) => {
   const { makerId } = req.params;
   return dbHelpers.getUnfulfilledShifts(makerId)
@@ -275,9 +289,10 @@ app.get('/makers/:makerId/unfulfilled', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
-app.get('/makers/:makerId/fulfilled', (req, res) => {
-  const { makerId } = req.params;
-  return dbHelpers.getFulfilledShifts(makerId)
+// histOrUpcoming is either 'history' or 'upcoming'
+app.get('/makers/:makerId/fulfilled/:histOrUpcoming', (req, res) => {
+  const { makerId, histOrUpcoming } = req.params;
+  return dbHelpers.getFulfilledShifts(makerId, histOrUpcoming)
     .then(shifts => res.status(200).json(shifts))
     .catch(err => errorHandler(err, res));
 });
