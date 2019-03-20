@@ -28,18 +28,18 @@ app.get('/', (req, res) => {
   res.send("I'm connected!");
 });
 
-// get list of shifts by term and value for werker
-app.get('/shifts', (req, res) => {
-  // TODO check helper function name
-  dbHelpers.getAllShifts()
-    .then((shifts) => {
-      res.send(shifts);
-    })
-    .catch((error) => {
-      console.log(error, 'error in getting shifts');
-      res.status(500).send('error in getting shifts');
-    });
-});
+// // get list of shifts by term and value for werker
+// app.get('/shifts', (req, res) => {
+//   // TODO check helper function name
+//   dbHelpers.getAllShifts()
+//     .then((shifts) => {
+//       res.send(shifts);
+//     })
+//     .catch((error) => {
+//       console.log(error, 'error in getting shifts');
+//       res.status(500).send('error in getting shifts');
+//     });
+// });
 
 // get detailed shift info by Id for maker and werker
 app.get('/shifts/:shiftId', (req, res) => {
@@ -86,16 +86,16 @@ app.get('/werkers/search/:positionName', (req, res) => {
     });
 });
 
-// get list of werkers by terms
-app.get('/werkers', (req, res) => {
+// get list of shifts by terms
+app.get('/shifts', (req, res) => {
   // TODO check helper function name
-  dbHelpers.getWerkersByTerm(req.query)
-    .then((werkers) => {
-      res.send(werkers);
+  dbHelpers.getShiftsByTerm(req.query)
+    .then((shifts) => {
+      res.send(shifts);
     })
     .catch((error) => {
-      console.log(error, 'unable to get werkers');
-      res.status(500).send('unable to get werkers');
+      console.log(error, 'unable to get shifts');
+      res.status(500).send('unable to get shifts');
     });
 });
 

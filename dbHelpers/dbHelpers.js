@@ -84,13 +84,40 @@ const addWerker = info => db.models.Werker.upsert(info, { returning: true })
     .then(() => bulkAddPositionToWerker(newWerker, info.positions)));
 
 /**
- * Function to search for werkers by position
- * @param {object} data - an object with search terms
+ * Function to search for shifts by various terms
+ *
+ * @param {object} terms - an object with search terms
+ * @param {string} terms.position - required position
+ * @param {number} terms.proximity - maximum distance, in miles
+ * @param {number} terms.payment_amnt - minimum pay to accept
+ * @param {string} terms.payment_type - payment type to restrict results to
  */
-const getWerkersByTerm = data => db.models.Werker.find({
-  where: { id: data.PositionId },
-  include: [db.models.Position],
-});
+const getShiftsByTerm = async (terms) => {
+  const searchTerms = terms;
+  if (terms.position) {
+    const position = await db.models.Position.findOne({
+      where: {
+        position: terms.position,
+      },
+    });
+    searchTerms.position = position.dataValues.id;
+    console.log(searchTerms);
+  }
+  const conditions = {
+    position: terms.position ? `sp."PositionId" = ${terms.position}` : 'sp."PositionId" IS NOT NULL',
+    // proximity is future magic
+    payment_amnt: terms.payment_amnt ? `sp.payment_amnt >= ${terms.payment_amnt}` : 'sp.payment_amnt IS NOT NULL',
+    payment_type: terms.payment_type ? `s.payment_type = ${terms.payment_type}` : 's.payment_type IS NOT NULL',
+  };
+  return db.sequelize.query(`
+  SELECT * FROM "Shifts" s
+  INNER JOIN "ShiftPositions" sp
+  ON s.id=sp."ShiftId"
+  INNER JOIN "Positions" p
+  ON p.id=sp."PositionId"
+  WHERE ${conditions.position} AND ${conditions.payment_amnt} AND ${conditions.payment_type} AND sp.filled=false`)
+    .then(([shifts, metadata]) => shifts);
+};
 
 /**
  * gets all werkers eligible for a shift by their listed positions
@@ -429,7 +456,7 @@ WHERE s."MakerId"=?`, { replacements: [id] })
 module.exports = {
   getWerkerProfile,
   inviteWerker,
-  getWerkersByTerm,
+  getShiftsByTerm,
   getShiftsBySearchTermsAndVals,
   acceptOrDeclineShift,
   createShift,
