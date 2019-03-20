@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 // const sequelize = require('sequelize');
 const db = require('../db/index');
@@ -109,10 +110,7 @@ INNER JOIN "Positions" p
 INNER JOIN "ShiftPositions" sp
   ON p.id=sp."PositionId"
 WHERE sp."ShiftId"=?`, { replacements: [id] })
-  .then((queryResult) => {
-    const fetchedWerkers = queryResult[0];
-    return appendCertsAndPositionsToWerkers(fetchedWerkers);
-  });
+  .then(([fetchedWerkers, metadata]) => appendCertsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * gets all werkers with a specific position
@@ -129,10 +127,7 @@ const getWerkersByPosition = position => db.sequelize.query(`
   INNER JOIN "Positions" p
     ON p.id=wp."PositionId"
   WHERE p.position=?`, { replacements: [position] })
-  .then((queryResult) => {
-    const fetchedWerkers = queryResult[0];
-    return appendCertsAndPositionsToWerkers(fetchedWerkers);
-  });
+  .then(([fetchedWerkers, metadata]) => appendCertsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * Function to invite a werker to a shift - creates a new invitation
@@ -178,7 +173,6 @@ const getWerkerProfile = id => db.models.Werker.findOne({
  */
 const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
   .map(position => db.models.Position.upsert(position, { returning: true })
-    // eslint-disable-next-line no-unused-vars
     .then(([newPosition, updated]) => db.models.ShiftPosition.upsert({
       ShiftId: shift.id,
       PositionId: newPosition.id,
@@ -256,13 +250,12 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   const updatedEntry = updated[1][0].dataValues;
   if (status === 'decline') {
     return updatedEntry;
-  } else {
-    return db.sequelize.query(`
-    UPDATE "ShiftPositions" sp
-    SET filled=true
-    WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
-      .then(([updated, metadata]) => updated);
   }
+  return db.sequelize.query(`
+  UPDATE "ShiftPositions" sp
+  SET filled=true
+  WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
+    .then(([updatedShiftPosition, metadata]) => updatedShiftPosition);
 });
 
 /**
@@ -385,10 +378,7 @@ ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionP
 INNER JOIN "Werkers" w
 ON w.id=ia."WerkerId"
 WHERE w.id=? AND ia.status=? AND ia.type=?`, { replacements: [id, status, type] })
-  .then(queryResult => {
-    const fetchedShifts = queryResult[0];
-    return appendMakerToShifts(fetchedShifts);
-  });
+  .then(([fetchedShifts, metadata]) => appendMakerToShifts(fetchedShifts));
 
 /**
  * receives werker and shift info for every pending application
@@ -408,7 +398,7 @@ INNER JOIN "Makers" m
 ON m.id=s."MakerId"
 WHERE ia.status = 'pending' AND ia.type = 'applied' AND m.id=?`,
 { replacements: [id] })
-  .then(queryResult => queryResult[0]);
+  .then(([fetchedShiftsAndWerkers, metadata]) => fetchedShiftsAndWerkers);
 
 /**
  * Gets all shifts that have some unfilled positions for a maker
@@ -421,7 +411,7 @@ SELECT DISTINCT s.* FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
 ON s.id=sp."ShiftId"
 WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
-  .then(queryResult => queryResult[0]);
+  .then(([fetchedShifts, metadata]) => fetchedShifts);
 
 /**
  * Gets all shifts that have no unfilled positions for a maker
@@ -434,7 +424,7 @@ SELECT DISTINCT s.* FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
 ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
 WHERE s."MakerId"=?`, { replacements: [id] })
-  .then(queryResult => queryResult[0]);
+  .then(([fetchedShifts, metadata]) => fetchedShifts);
 
 module.exports = {
   getWerkerProfile,

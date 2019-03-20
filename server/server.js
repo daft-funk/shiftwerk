@@ -248,10 +248,10 @@ app.delete('/shifts/:shiftId', (req, res) => {
 });
 
 app.get('/werkers/:werkerId/shifts/available', (req, res) => {
-    const { werkerId } = req.params;
-    return dbHelpers.getShiftsForWerker(werkerId)
-      .then(shifts => res.json(200, shifts))
-      .catch(err => errorHandler(err, res));
+  const { werkerId } = req.params;
+  return dbHelpers.getShiftsForWerker(werkerId)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err, res));
 });
 
 app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
