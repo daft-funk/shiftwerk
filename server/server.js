@@ -269,6 +269,12 @@ app.get('/werkers/:werkerId/shifts/available', (req, res) => {
       .catch(err => errorHandler(err, res));
 });
 
+app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
+    const { werkerId, status } = req.params;
+    return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
+        .then(shifts => res.json(200, shifts))
+        .catch(err => errorHandler(err, res));
+});
 
 const port = process.env.PORT || 4000;
 // models.sequelize.sync();

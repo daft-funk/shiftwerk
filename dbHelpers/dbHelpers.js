@@ -367,26 +367,21 @@ const deleteShift = id => db.models.Shift.destroy({
  * gets all shifts a werker has been invited to
  *
  * @param {number} id - werker id from DB
+ * @param {string} status - either 'pending' or 'accept'
  * @returns {Promise<Object[]>} - An array of Shift objects
  */
 
-const getInvitedShifts = id => db.models.Shift.findAll({
-  include: [
-    {
-      model: db.models.InviteApply,
-      where: { 'status': 'invited' },
-      include: [
-        {
-          model: db.models.Werker,
-          where: { id },
-        },
-      ],
-    }
-  ]
-});
-
-
-
+const getInvitedOrAcceptedShifts = (id, status) => db.sequelize.query(`
+SELECT * FROM "Shifts" s
+INNER JOIN "InviteApplies" ia
+ON s.id=ia."ShiftId"
+INNER JOIN "Werkers" w
+ON w.id=ia."WerkerId"
+WHERE w.id=? AND ia.status=? AND ia.type='invite'`, { replacements: [id, status] })
+  .then(queryResult => {
+    const fetchedShifts = queryResult[0];
+    return appendMakerToShifts(fetchedShifts);
+  });
 
 module.exports = {
   getWerkerProfile,
@@ -407,4 +402,5 @@ module.exports = {
   getWerkersForShift,
   getWerkersByPosition,
   getShiftsForWerker,
+  getInvitedOrAcceptedShifts,
 };

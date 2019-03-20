@@ -22,6 +22,9 @@ module.exports = (sequelize, DataTypes) => {
       through: models.ShiftPosition,
       foreignKey: 'ShiftId',
     });
+    Shift.belongsToMany(models.Werker, {
+      through: 'InviteApply',
+    });
   };
   return Shift;
 };
