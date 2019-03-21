@@ -399,11 +399,6 @@ ON s.id = sp."ShiftId"
 INNER JOIN "InviteApplies" ia
 ON sp. "ShiftId" = ia."ShiftPositionShiftId" AND sp."PositionId" = ia."ShiftPositionPositionId"
 INNER JOIN "Werkers" w
-<<<<<<< HEAD
-ON w.id=ia."WerkerId"
-WHERE w.id=? AND ia.status=? AND ia.type=?`, { replacements: [id, status, type] })
-  .then(([fetchedShifts, metadata]) => appendMakerToShifts(fetchedShifts));
-=======
 ON w.id = ia."WerkerId"
 WHERE ia.type='invite' AND w.id=${id} AND ia.status='pending'`)
   .then(([shifts, metadata]) => shifts);
@@ -434,7 +429,6 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
       return appendMakerToShifts(fetchedShifts);
     });
 };
->>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 /**
  * receives werker and shift info for every pending application
@@ -475,14 +469,6 @@ WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
  * @param {number} id - maker ID from DB
  */
 
-<<<<<<< HEAD
-const getFulfilledShifts = id => db.sequelize.query(`
-SELECT DISTINCT s.* FROM "Shifts" s
-INNER JOIN "ShiftPositions" sp
-ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
-WHERE s."MakerId"=?`, { replacements: [id] })
-  .then(([fetchedShifts, metadata]) => fetchedShifts);
-=======
 const getFulfilledShifts = (id, histOrUpcoming) => {
   const option = histOrUpcoming === 'history'
     ? '<'
@@ -494,7 +480,6 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
   WHERE s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
     .then(queryResult => queryResult[0]);
 };
->>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 module.exports = {
   getWerkerProfile,
