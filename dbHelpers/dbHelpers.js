@@ -352,7 +352,7 @@ const getAllShifts = (offset = 0) => db.models.Shift.findAll({
  */
 const appendMakerToShifts = shifts => Promise.all(shifts.map(shift => db.sequelize.query(`
   SELECT m.* from "Makers" m, "Shifts" s
-  WHERE m.id=s."MakerId"`)
+  WHERE m.id=s."MakerId" AND s.id=${shift.id}`)
   .then(maker => Object.assign(shift, { maker: maker[0] }))));
 
 /**
@@ -399,11 +399,6 @@ ON s.id = sp."ShiftId"
 INNER JOIN "InviteApplies" ia
 ON sp. "ShiftId" = ia."ShiftPositionShiftId" AND sp."PositionId" = ia."ShiftPositionPositionId"
 INNER JOIN "Werkers" w
-<<<<<<< HEAD
-ON w.id=ia."WerkerId"
-WHERE w.id=? AND ia.status=? AND ia.type=?`, { replacements: [id, status, type] })
-  .then(([fetchedShifts, metadata]) => appendMakerToShifts(fetchedShifts));
-=======
 ON w.id = ia."WerkerId"
 WHERE ia.type='invite' AND w.id=${id} AND ia.status='pending'`)
   .then(([shifts, metadata]) => shifts);
@@ -429,12 +424,10 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
   INNER JOIN "Werkers" w
   ON w.id=ia."WerkerId"
   WHERE w.id=? AND s.time_date ${option} 'now'`, { replacements: [id] })
-    .then(queryResult => {
-      const fetchedShifts = queryResult[0];
+    .then(([fetchedShifts, metadata]) => {
       return appendMakerToShifts(fetchedShifts);
     });
 };
->>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 /**
  * receives werker and shift info for every pending application
@@ -475,14 +468,6 @@ WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
  * @param {number} id - maker ID from DB
  */
 
-<<<<<<< HEAD
-const getFulfilledShifts = id => db.sequelize.query(`
-SELECT DISTINCT s.* FROM "Shifts" s
-INNER JOIN "ShiftPositions" sp
-ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
-WHERE s."MakerId"=?`, { replacements: [id] })
-  .then(([fetchedShifts, metadata]) => fetchedShifts);
-=======
 const getFulfilledShifts = (id, histOrUpcoming) => {
   const option = histOrUpcoming === 'history'
     ? '<'
@@ -492,9 +477,8 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
   INNER JOIN "ShiftPositions" sp
   ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
   WHERE s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
-    .then(queryResult => queryResult[0]);
+    .then(([shifts, metadata]) => shifts);
 };
->>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 module.exports = {
   getWerkerProfile,
