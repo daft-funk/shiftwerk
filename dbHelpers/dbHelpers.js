@@ -480,6 +480,14 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
     .then(([shifts, metadata]) => shifts);
 };
 
+const rateShift = (shiftId, werkerId, rating, type) => db.sequelize.query(`
+INSERT INTO "Ratings" ("ShiftId", "WerkerId", rating, type) VALUES (${shiftId}, ${werkerId}, ${rating}, ${type})`);
+
+const getShiftOrWerkerRating = (id, isWerker) => db.sequelize.query(`
+SELECT AVG(rating) FROM "Ratings" r
+WHERE r."${isWerker ? 'Werker' : 'Shift'}Id"=${id}`)
+  .then(([rating, metadata]) => rating);
+
 module.exports = {
   getWerkerProfile,
   inviteWerker,
@@ -503,4 +511,6 @@ module.exports = {
   getApplicationsForShifts,
   getUnfulfilledShifts,
   getFulfilledShifts,
+  rateShift,
+  getShiftOrWerkerRating,
 };
