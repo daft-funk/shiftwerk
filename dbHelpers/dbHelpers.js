@@ -352,7 +352,7 @@ const getAllShifts = (offset = 0) => db.models.Shift.findAll({
  */
 const appendMakerToShifts = shifts => Promise.all(shifts.map(shift => db.sequelize.query(`
   SELECT m.* from "Makers" m, "Shifts" s
-  WHERE m.id=s."MakerId"`)
+  WHERE m.id=s."MakerId" AND s.id=${shift.id}`)
   .then(maker => Object.assign(shift, { maker: maker[0] }))));
 
 /**
