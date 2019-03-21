@@ -462,7 +462,7 @@ ON m.id=s."MakerId"
 INNER JOIN "Positions" p
 ON sp."PositionId"=p.id
 WHERE ia.status = 'pending' AND ia.type = 'apply' AND m.id=${id}`)
-  .spread(fetchedWerkers => fetchedWerkers);
+  .spread(fetchedWerkers => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * Gets all shifts that have some unfilled positions for a maker
