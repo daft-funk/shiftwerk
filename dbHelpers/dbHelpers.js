@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 // const sequelize = require('sequelize');
 const db = require('../db/index');
@@ -83,13 +84,40 @@ const addWerker = info => db.models.Werker.upsert(info, { returning: true })
     .then(() => bulkAddPositionToWerker(newWerker, info.positions)));
 
 /**
- * Function to search for werkers by position
- * @param {object} data - an object with search terms
+ * Function to search for shifts by various terms
+ *
+ * @param {object} terms - an object with search terms
+ * @param {string} terms.position - required position
+ * @param {number} terms.proximity - maximum distance, in miles
+ * @param {number} terms.payment_amnt - minimum pay to accept
+ * @param {string} terms.payment_type - payment type to restrict results to
  */
-const getWerkersByTerm = data => db.models.Werker.find({
-  where: { id: data.PositionId },
-  include: [db.models.Position],
-});
+const getShiftsByTerm = async (terms) => {
+  const searchTerms = terms;
+  if (terms.position) {
+    const position = await db.models.Position.findOne({
+      where: {
+        position: terms.position,
+      },
+    });
+    searchTerms.position = position.dataValues.id;
+    console.log(searchTerms);
+  }
+  const conditions = {
+    position: terms.position ? `sp."PositionId" = ${terms.position}` : 'sp."PositionId" IS NOT NULL',
+    // proximity is future magic
+    payment_amnt: terms.payment_amnt ? `sp.payment_amnt >= ${terms.payment_amnt}` : 'sp.payment_amnt IS NOT NULL',
+    payment_type: terms.payment_type ? `s.payment_type = ${terms.payment_type}` : 's.payment_type IS NOT NULL',
+  };
+  return db.sequelize.query(`
+  SELECT * FROM "Shifts" s
+  INNER JOIN "ShiftPositions" sp
+  ON s.id=sp."ShiftId"
+  INNER JOIN "Positions" p
+  ON p.id=sp."PositionId"
+  WHERE ${conditions.position} AND ${conditions.payment_amnt} AND ${conditions.payment_type} AND sp.filled=false`)
+    .then(([shifts, metadata]) => shifts);
+};
 
 /**
  * gets all werkers eligible for a shift by their listed positions
@@ -109,10 +137,7 @@ INNER JOIN "Positions" p
 INNER JOIN "ShiftPositions" sp
   ON p.id=sp."PositionId"
 WHERE sp."ShiftId"=?`, { replacements: [id] })
-  .then((queryResult) => {
-    const fetchedWerkers = queryResult[0];
-    return appendCertsAndPositionsToWerkers(fetchedWerkers);
-  });
+  .then(([fetchedWerkers, metadata]) => appendCertsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * gets all werkers with a specific position
@@ -129,10 +154,7 @@ const getWerkersByPosition = position => db.sequelize.query(`
   INNER JOIN "Positions" p
     ON p.id=wp."PositionId"
   WHERE p.position=?`, { replacements: [position] })
-  .then((queryResult) => {
-    const fetchedWerkers = queryResult[0];
-    return appendCertsAndPositionsToWerkers(fetchedWerkers);
-  });
+  .then(([fetchedWerkers, metadata]) => appendCertsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * Function to invite a werker to a shift - creates a new invitation
@@ -178,7 +200,6 @@ const getWerkerProfile = id => db.models.Werker.findOne({
  */
 const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
   .map(position => db.models.Position.upsert(position, { returning: true })
-    // eslint-disable-next-line no-unused-vars
     .then(([newPosition, updated]) => db.models.ShiftPosition.upsert({
       ShiftId: shift.id,
       PositionId: newPosition.id,
@@ -256,13 +277,12 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   const updatedEntry = updated[1][0].dataValues;
   if (status === 'decline') {
     return updatedEntry;
-  } else {
-    return db.sequelize.query(`
-    UPDATE "ShiftPositions" sp
-    SET filled=true
-    WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
-      .then(([updated, metadata]) => updated);
   }
+  return db.sequelize.query(`
+  UPDATE "ShiftPositions" sp
+  SET filled=true
+  WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
+    .then(([updatedShiftPosition, metadata]) => updatedShiftPosition);
 });
 
 /**
@@ -379,6 +399,11 @@ ON s.id = sp."ShiftId"
 INNER JOIN "InviteApplies" ia
 ON sp. "ShiftId" = ia."ShiftPositionShiftId" AND sp."PositionId" = ia."ShiftPositionPositionId"
 INNER JOIN "Werkers" w
+<<<<<<< HEAD
+ON w.id=ia."WerkerId"
+WHERE w.id=? AND ia.status=? AND ia.type=?`, { replacements: [id, status, type] })
+  .then(([fetchedShifts, metadata]) => appendMakerToShifts(fetchedShifts));
+=======
 ON w.id = ia."WerkerId"
 WHERE ia.type='invite' AND w.id=${id} AND ia.status='pending'`)
   .then(([shifts, metadata]) => shifts);
@@ -409,6 +434,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
       return appendMakerToShifts(fetchedShifts);
     });
 };
+>>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 /**
  * receives werker and shift info for every pending application
@@ -428,7 +454,7 @@ INNER JOIN "Makers" m
 ON m.id=s."MakerId"
 WHERE ia.status = 'pending' AND ia.type = 'applied' AND m.id=?`,
 { replacements: [id] })
-  .then(queryResult => queryResult[0]);
+  .then(([fetchedShiftsAndWerkers, metadata]) => fetchedShiftsAndWerkers);
 
 /**
  * Gets all shifts that have some unfilled positions for a maker
@@ -441,7 +467,7 @@ SELECT DISTINCT s.* FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
 ON s.id=sp."ShiftId"
 WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
-  .then(queryResult => queryResult[0]);
+  .then(([fetchedShifts, metadata]) => fetchedShifts);
 
 /**
  * Gets all shifts that have no unfilled positions for a maker
@@ -449,6 +475,14 @@ WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
  * @param {number} id - maker ID from DB
  */
 
+<<<<<<< HEAD
+const getFulfilledShifts = id => db.sequelize.query(`
+SELECT DISTINCT s.* FROM "Shifts" s
+INNER JOIN "ShiftPositions" sp
+ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
+WHERE s."MakerId"=?`, { replacements: [id] })
+  .then(([fetchedShifts, metadata]) => fetchedShifts);
+=======
 const getFulfilledShifts = (id, histOrUpcoming) => {
   const option = histOrUpcoming === 'history'
     ? '<'
@@ -460,11 +494,12 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
   WHERE s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
     .then(queryResult => queryResult[0]);
 };
+>>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 module.exports = {
   getWerkerProfile,
   inviteWerker,
-  getWerkersByTerm,
+  getShiftsByTerm,
   getShiftsBySearchTermsAndVals,
   acceptOrDeclineShift,
   createShift,
