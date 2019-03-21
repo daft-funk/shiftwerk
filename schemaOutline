@@ -37,7 +37,7 @@
 		<type label="SET" length="1" sql="SET" quote=""/>
 		<type label="Bit" length="0" sql="bit" quote=""/>
 	</group>
-</datatypes><table x="1323" y="688" name="werker">
+</datatypes><table x="1330" y="709" name="werker">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -75,7 +75,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1323" y="968" name="shift">
+<table x="1327" y="1022" name="shift">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -97,9 +97,6 @@
 <row name="longitute" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
 <default>NULL</default></row>
-<row name="payment_amnt" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default></row>
 <row name="description" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
 <default>NULL</default></row>
@@ -107,30 +104,14 @@
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="shift_maker" row="id" />
 </row>
-<row name="cache_rating" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
+<row name="payment_type" null="1" autoincrement="0">
+<datatype>VARCHAR</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="1575" y="806" name="werker_job">
-<row name="id" null="1" autoincrement="1">
-<datatype>INTEGER</datatype>
-<default>NULL</default></row>
-<row name="id_werker" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="werker" row="id" />
-</row>
-<row name="id_shift" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="shift" row="id" />
-</row>
-<key type="PRIMARY" name="">
-<part>id</part>
-</key>
-</table>
-<table x="1160" y="1175" name="shift_maker">
+<table x="1117" y="1166" name="shift_maker">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -145,6 +126,9 @@
 <default>NULL</default></row>
 <row name="email" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
+<default>NULL</default></row>
+<row name="cache_rating" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
@@ -200,7 +184,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1816" y="971" name="position">
+<table x="1746" y="955" name="position">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -211,7 +195,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1575" y="1093" name="shiftPositions">
+<table x="1579" y="1109" name="shift_position">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -226,11 +210,14 @@
 <row name="filled" null="1" autoincrement="0">
 <datatype>bit</datatype>
 <default>NULL</default></row>
+<row name="payment_amnt" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default></row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="1602" y="699" name="worker_position">
+<table x="1506" y="609" name="worker_position">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -246,7 +233,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="855" y="805" name="certification">
+<table x="917" y="693" name="certification">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -257,7 +244,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1026" y="703" name="werker_certification">
+<table x="1099" y="607" name="werker_certification">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -276,7 +263,7 @@
 <part>id</part>
 </key>
 </table>
-<table x="1083" y="861" name="rating">
+<table x="1075" y="784" name="rating">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
@@ -298,48 +285,13 @@
 <part>id</part>
 </key>
 </table>
-<table x="1809" y="1127" name="payment_type">
-<row name="id" null="1" autoincrement="1">
-<datatype>INTEGER</datatype>
-<default>NULL</default></row>
-<row name="payment_name" null="1" autoincrement="0">
-<datatype>VARCHAR</datatype>
-<default>NULL</default></row>
-<key type="PRIMARY" name="">
-<part>id</part>
-</key>
-</table>
-<table x="1521" y="1217" name="shift_payment_type">
-<row name="id" null="1" autoincrement="1">
-<datatype>INTEGER</datatype>
-<default>NULL</default></row>
-<row name="id_payment_type" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="payment_type" row="id" />
-</row>
-<row name="id_shift" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="shift" row="id" />
-</row>
-<key type="PRIMARY" name="">
-<part>id</part>
-</key>
-</table>
-<table x="1574" y="909" name="invite_apply">
+<table x="1520" y="821" name="invite_apply">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
 <row name="id_werker" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="werker" row="id" />
-</row>
-<row name="id_shift" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="shift" row="id" />
-</row>
-<row name="id_position" null="1" autoincrement="0">
-<datatype>INTEGER</datatype>
-<default>NULL</default><relation table="position" row="id" />
 </row>
 <row name="status" null="1" autoincrement="0">
 <datatype>ENUM</datatype>
@@ -350,11 +302,15 @@
 <row name="type" null="1" autoincrement="0">
 <datatype>ENUM</datatype>
 <default>NULL</default></row>
+<row name="id_shiftPositions" null="1" autoincrement="0">
+<datatype>INTEGER</datatype>
+<default>NULL</default><relation table="shift_position" row="id" />
+</row>
 <key type="PRIMARY" name="">
 <part>id</part>
 </key>
 </table>
-<table x="1081" y="1026" name="favorite">
+<table x="1089" y="984" name="favorite">
 <row name="id" null="1" autoincrement="1">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
