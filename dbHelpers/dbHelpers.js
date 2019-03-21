@@ -483,9 +483,16 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
 const rateShift = (shiftId, werkerId, rating, type) => db.sequelize.query(`
 INSERT INTO "Ratings" ("ShiftId", "WerkerId", rating, type) VALUES (${shiftId}, ${werkerId}, ${rating}, ${type})`);
 
-const getShiftOrWerkerRating = (id, isWerker) => db.sequelize.query(`
+const getWerkerRating = id => db.sequelize.query(`
 SELECT AVG(rating) FROM "Ratings" r
-WHERE r."${isWerker ? 'Werker' : 'Shift'}Id"=${id}`)
+WHERE r."WerkerId"=${id}`)
+  .then(([rating, metadata]) => rating);
+
+const getMakerRating = id => db.sequelize.query(`
+SELECT AVG(rating) FROM "Ratings" r
+INNER JOIN "Shifts" s
+ON s.id=r."ShiftId"
+WHERE s."MakerId"=${id}`)
   .then(([rating, metadata]) => rating);
 
 module.exports = {
