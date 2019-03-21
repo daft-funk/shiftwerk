@@ -8,5 +8,5 @@ module.exports.geocode = async (address) => {
 
 module.exports.reverseGeocode = async (lat, long) => {
   const reverseGeocoded = await request.get(`https://api.tomtom.com/search/2/reverseGeocode/${lat},${long}.json?key=${process.env.TOMTOM_API_KEY}&limit=1`);
-  return JSON.parse(reverseGeocoded).addresses[0].address;
+  return JSON.parse(reverseGeocoded).addresses[0].address.freeformAddress;
 };

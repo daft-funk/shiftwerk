@@ -12,17 +12,22 @@ const dbHelpers = require('../dbHelpers/dbHelpers.js');
 //   'WBbo3VF1_r9zsOovnfdi0h1Z',
 // );
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
+const { models } = require('../db/index');
 
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const { models } = require('../db/index');
 
 const errorHandler = (err, res) => {
   console.error(err);
   res.send(500, 'Something went wrong!');
+};
+
+const appendAddressToShift = async (shift) => {
+  const address = await reverseGeocode({ lat: shift.lat, long: shift.long });
+  return Object.assign(shift, { address });
 };
 
 // ----WERKER---- ////
@@ -109,32 +114,30 @@ app.get('/makers/:makerId', (req, res) => {
 // WERKER-FACING //
 
 // get list of shifts by terms
-app.get('/shifts', (req, res) => {
-  // TODO check helper function name
-  dbHelpers.getShiftsByTerm(req.query)
-    .then((shifts) => {
-      res.send(shifts);
-    })
-    .catch((error) => {
-      console.log(error, 'unable to get shifts');
-      res.status(500).send('unable to get shifts');
-    });
+app.get('/shifts', async (req, res) => {
+  const shifts = await dbHelpers.getShiftsByTerm(req.query).catch(err => errorHandler(err, res));
+  const shiftsWithAddress = await Promise.all(shifts
+    .map(shift => reverseGeocode(shift))).catch(err => errorHandler(err, res));
+  return res.statusCode(200).json(shiftsWithAddress);
 });
 
 // gets all shifts a werker is eligible for based on positions
-app.get('/werkers/:werkerId/shifts/available', (req, res) => {
+app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
   const { werkerId } = req.params;
-  return dbHelpers.getShiftsForWerker(werkerId)
-    .then(shifts => res.json(200, shifts))
-    .catch(err => errorHandler(err, res));
+  const shifts = await dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
+  const shiftsWithAddress = await Promise.all(shifts
+    .map(shift => reverseGeocode(shift))).catch(err => errorHandler(err, res));
+  return res.statusCode(200).json(shiftsWithAddress);
 });
 
 // gets all shifts for werker based on invite status ('invite' or 'accept')
-app.get('/werkers/:werkerId/shifts/:status', (req, res) => {
+app.get('/werkers/:werkerId/shifts/:status', async (req, res) => {
   const { werkerId, status } = req.params;
-  return dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
-    .then(shifts => res.json(200, shifts))
+  const shifts = dbHelpers.getInvitedOrAcceptedShifts(werkerId, status)
     .catch(err => errorHandler(err, res));
+  const shiftsWithAddress = await Promise.all(shifts
+    .map(shift => reverseGeocode(shift))).catch(err => errorHandler(err, res));
+  return res.statusCode(200).json(shiftsWithAddress);
 });
 
 // MAKER-FACING //
@@ -175,21 +178,24 @@ app.delete('/shifts/:shiftId', (req, res) => {
 });
 
 // get all shifts a werker is eligible for based on positions
-app.get('/werkers/:werkerId/shifts/available', (req, res) => {
+app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
   const { werkerId } = req.params;
-  return dbHelpers.getShiftsForWerker(werkerId)
-    .then(shifts => res.json(200, shifts))
-    .catch(err => errorHandler(err, res));
+  const shifts = dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
+  const shiftsWithAddress = await Promise.all(shifts
+    .map(shift => reverseGeocode(shift))).catch(err => errorHandler(err, res));
+  return res.statusCode(200).json(shiftsWithAddress);
 });
 
 // histOrUpcoming is either 'history' or 'upcoming'
 // status is 'accept'
 // histOrUpcoming does not apply if status is 'invite'
-app.get('/werkers/:werkerId/shifts/:histOrUpcoming', (req, res) => {
+app.get('/werkers/:werkerId/shifts/:histOrUpcoming', async (req, res) => {
   const { werkerId, histOrUpcoming } = req.params;
-  return dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
-    .then(shifts => res.json(200, shifts))
+  const shifts = dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
     .catch(err => errorHandler(err, res));
+  const shiftsWithAddress = await Promise.all(shifts
+    .map(shift => reverseGeocode(shift))).catch(err => errorHandler(err, res));
+  return res.statusCode(200).json(shiftsWithAddress);
 });
 
 // get all shifts werker is invited to
