@@ -489,9 +489,10 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
     : '>';
   return db.sequelize.query(`
   SELECT DISTINCT s.* FROM "Shifts" s
-  INNER JOIN "ShiftPositions" sp
-  ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
-  WHERE s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
+  WHERE NOT EXISTS (
+    SELECT * FROM "ShiftPositions" sp
+    WHERE s.id=sp."ShiftId" AND sp.filled=false
+  ) AND s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
     .spread(shifts => shifts);
 };
 

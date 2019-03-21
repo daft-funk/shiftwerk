@@ -133,7 +133,7 @@ app.get('/makers/:makerId', (req, res) => {
 app.get('/shifts', async (req, res) => {
   const shifts = await dbHelpers.getShiftsByTerm(req.query).catch(err => errorHandler(err, res));
   const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, true))).catch(err => errorHandler(err, res));
+    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
   return res.status(200).json(shiftsWithAddress);
 });
 
@@ -199,7 +199,7 @@ app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
   const shifts = await dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
   console.log(shifts);
   const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, true))).catch(err => errorHandler(err, res));
+    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
   return res.status(200).json(shiftsWithAddress);
 });
 
@@ -211,7 +211,7 @@ app.get('/werkers/:werkerId/shifts/:histOrUpcoming', async (req, res) => {
   const shifts = dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
     .catch(err => errorHandler(err, res));
   const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, true))).catch(err => errorHandler(err, res));
+    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
   return res.status(200).json(shiftsWithAddress);
 });
 
@@ -220,7 +220,7 @@ app.get('/werkers/:werkerId/invitations', async (req, res) => {
   const { werkerId } = req.params;
   const shifts = await dbHelpers.getInvitedShifts(werkerId).catch(err => errorHandler(err, res));
   const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, true))).catch(err => errorHandler(err, res));
+    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
   return res.status(200).json(shiftsWithAddress);
 });
 
@@ -239,7 +239,7 @@ app.get('/makers/:makerId/unfulfilled', async (req, res) => {
   const shifts = await dbHelpers.getUnfulfilledShifts(makerId)
     .catch(err => errorHandler(err, res));
   const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, true))).catch(err => errorHandler(err, res));
+    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
   return res.status(200).json(shiftsWithAddress);
 });
 
@@ -250,7 +250,7 @@ app.get('/makers/:makerId/fulfilled/:histOrUpcoming', async (req, res) => {
   const shifts = await dbHelpers.getFulfilledShifts(makerId, histOrUpcoming)
     .catch(err => errorHandler(err, res));
   const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, true))).catch(err => errorHandler(err, res));
+    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
   return res.status(200).json(shiftsWithAddress);
 });
 
