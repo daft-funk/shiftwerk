@@ -32,6 +32,16 @@ const appendCertsAndPositionsToWerkers = werkers => Promise.all(werkers.map(werk
     .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] })))));
 
 /**
+ * gets the average of ratings received by werker
+ *
+ * @param {number} id - Werker id from DB
+ */
+const getWerkerRating = id => db.sequelize.query(`
+SELECT AVG(rating) FROM "Ratings" r
+WHERE r."WerkerId"=${id} AND r.type='Werker'`)
+  .then(([rating, metadata]) => rating);
+
+/**
  * adds any number of certifications to a werker
  *
  * @param {Object} werker - werker model instance
@@ -482,11 +492,6 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
 
 const rateShift = (shiftId, werkerId, rating, type) => db.sequelize.query(`
 INSERT INTO "Ratings" ("ShiftId", "WerkerId", rating, type) VALUES (${shiftId}, ${werkerId}, ${rating}, ${type})`);
-
-const getWerkerRating = id => db.sequelize.query(`
-SELECT AVG(rating) FROM "Ratings" r
-WHERE r."WerkerId"=${id}`)
-  .then(([rating, metadata]) => rating);
 
 const getMakerRating = id => db.sequelize.query(`
 SELECT AVG(rating) FROM "Ratings" r
