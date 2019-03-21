@@ -352,7 +352,7 @@ const getAllShifts = (offset = 0) => db.models.Shift.findAll({
  */
 const appendMakerToShifts = shifts => Promise.all(shifts.map(shift => db.sequelize.query(`
   SELECT m.* from "Makers" m, "Shifts" s
-  WHERE m.id=s."MakerId"`)
+  WHERE m.id=s."MakerId" AND s.id=${shift.id}`)
   .then(maker => Object.assign(shift, { maker: maker[0] }))));
 
 /**
@@ -424,8 +424,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
   INNER JOIN "Werkers" w
   ON w.id=ia."WerkerId"
   WHERE w.id=? AND s.time_date ${option} 'now'`, { replacements: [id] })
-    .then(queryResult => {
-      const fetchedShifts = queryResult[0];
+    .then(([fetchedShifts, metadata]) => {
       return appendMakerToShifts(fetchedShifts);
     });
 };
@@ -478,7 +477,7 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
   INNER JOIN "ShiftPositions" sp
   ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
   WHERE s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
-    .then(queryResult => queryResult[0]);
+    .then(([shifts, metadata]) => shifts);
 };
 
 module.exports = {
