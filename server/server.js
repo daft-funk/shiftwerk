@@ -28,19 +28,18 @@ app.get('/', (req, res) => {
   res.send("I'm connected!");
 });
 
-// get list of shifts by term and value for werker
-app.get('/shifts', (req, res) => {
-  // TODO check helper function name
-  dbHelpers.getAllShifts()
-    .then((shifts) => {
-      console.log(shifts, 'DING DING /shifts endpoint');
-      res.send(shifts);
-    })
-    .catch((error) => {
-      console.log(error, 'error in getting shifts');
-      res.status(500).send('error in getting shifts');
-    });
-});
+// // get list of shifts by term and value for werker
+// app.get('/shifts', (req, res) => {
+//   // TODO check helper function name
+//   dbHelpers.getAllShifts()
+//     .then((shifts) => {
+//       res.send(shifts);
+//     })
+//     .catch((error) => {
+//       console.log(error, 'error in getting shifts');
+//       res.status(500).send('error in getting shifts');
+//     });
+// });
 
 // get detailed shift info by Id for maker and werker
 app.get('/shifts/:shiftId', (req, res) => {
@@ -94,16 +93,16 @@ app.get('/werkers/search/:positionName', (req, res) => {
     });
 });
 
-// get list of werkers by terms
-app.get('/werkers', (req, res) => {
+// get list of shifts by terms
+app.get('/shifts', (req, res) => {
   // TODO check helper function name
-  dbHelpers.getWerkersByTerm(req.query)
-    .then((werkers) => {
-      res.send(werkers);
+  dbHelpers.getShiftsByTerm(req.query)
+    .then((shifts) => {
+      res.send(shifts);
     })
     .catch((error) => {
-      console.log(error, 'unable to get werkers');
-      res.status(500).send('unable to get werkers');
+      console.log(error, 'unable to get shifts');
+      res.status(500).send('unable to get shifts');
     });
 });
 
@@ -218,11 +217,11 @@ app.put('/shifts', (req, res) => {
     });
 });
 
-// apply for shift
-app.put('/shifts/:shiftId/application', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  // TODO check name of helper function
-  dbHelpers.applyForShift(shiftId)
+// apply or invite for shift
+// applyOrInvite must be string "apply" or "invite"
+app.put('/shifts/:shiftId/:applyOrInvite/:werkerId/:positionName', (req, res) => {
+  const { shiftId, applyOrInvite, werkerId, positionName } = req.params;
+  dbHelpers.applyOrInviteForShift(shiftId, werkerId, positionName, applyOrInvite)
     .then(() => {
       res.send(201);
     })
@@ -233,31 +232,16 @@ app.put('/shifts/:shiftId/application', (req, res) => {
 });
 
 // accept or decline shift
-app.patch('/shifts/:shiftId/application', (req, res) => {
-  const shiftId = JSON.parse(req.params.shiftId);
-  const { status, werkerId } = req.body;
-  // NEED TO GET WERKER Id
-  // need to find out if accessing status correctly
-  // TODO check name of helper function
-  if (status === true) {
-    dbHelpers.acceptShift(shiftId, werkerId)
-      .then(() => {
-        res.send(204);
-      })
-      .catch((error) => {
-        console.log(error, 'unable to accept');
-        res.status(500).send('unable to accept');
-      });
-  } else if (status === false) {
-    dbHelpers.declineShift(shiftId, werkerId)
-      .then(() => {
-        res.send(204);
-      })
-      .catch((error) => {
-        console.log(error, 'unable to decline');
-        res.status(500).send('unable to decline');
-      });
-  }
+app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
+  const { shiftId, werkerId, status } = req.params;
+  dbHelpers.acceptOrDeclineShift(shiftId, werkerId, status)
+    .then(() => {
+      res.send(204);
+    })
+    .catch((error) => {
+      console.log(error, 'unable to accept/decline');
+      res.status(500).send('unable to accept/decline');
+    });
 });
 
 app.delete('/shifts/:shiftId', (req, res) => {
@@ -268,6 +252,56 @@ app.delete('/shifts/:shiftId', (req, res) => {
       console.error(err);
       res.status(500).send('unable to delete');
     });
+});
+
+// get all shifts a werker is eligible for based on positions
+app.get('/werkers/:werkerId/shifts/available', (req, res) => {
+  const { werkerId } = req.params;
+  return dbHelpers.getShiftsForWerker(werkerId)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// histOrUpcoming is either 'history' or 'upcoming'
+// status is 'accept'
+// histOrUpcoming does not apply if status is 'invite'
+app.get('/werkers/:werkerId/shifts/:histOrUpcoming', (req, res) => {
+  const { werkerId, histOrUpcoming } = req.params;
+  return dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
+    .then(shifts => res.json(200, shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// get all shifts werker is invited to
+app.get('/werkers/:werkerId/invitations', (req, res) => {
+  const { werkerId } = req.params;
+  return dbHelpers.getInvitedShifts(werkerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// get all applications to a maker's shifts
+app.get('/makers/:makerId/applications', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getApplicationsForShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// get all unfulfilled shifts of a maker
+app.get('/makers/:makerId/unfulfilled', (req, res) => {
+  const { makerId } = req.params;
+  return dbHelpers.getUnfulfilledShifts(makerId)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
+});
+
+// histOrUpcoming is either 'history' or 'upcoming'
+app.get('/makers/:makerId/fulfilled/:histOrUpcoming', (req, res) => {
+  const { makerId, histOrUpcoming } = req.params;
+  return dbHelpers.getFulfilledShifts(makerId, histOrUpcoming)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err, res));
 });
 
 const port = process.env.PORT || 4000;
