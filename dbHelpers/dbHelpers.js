@@ -388,24 +388,53 @@ const deleteShift = id => db.models.Shift.destroy({
 });
 
 /**
- * gets all shifts a werker has been invited to
+ * gets all shifts a werker has been invited to with status 'pending'
  *
- * @param {number} id - werker id from DB
- * @param {string} status - either 'pending' or 'accept'
- * @param {string} type - either 'invite' or 'apply'
- * @returns {Promise<Object[]>} - An array of Shift objects
+ * @param {number} id - ID of werker fro DB
  */
-
-const getInvitedOrAcceptedShifts = (id, status, type) => db.sequelize.query(`
+const getInvitedShifts = id => db.sequelize.query(`
 SELECT * FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
-ON s.id=sp."ShiftId"
+ON s.id = sp."ShiftId"
 INNER JOIN "InviteApplies" ia
-ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionPositionId"
+ON sp. "ShiftId" = ia."ShiftPositionShiftId" AND sp."PositionId" = ia."ShiftPositionPositionId"
 INNER JOIN "Werkers" w
+<<<<<<< HEAD
 ON w.id=ia."WerkerId"
 WHERE w.id=? AND ia.status=? AND ia.type=?`, { replacements: [id, status, type] })
   .then(([fetchedShifts, metadata]) => appendMakerToShifts(fetchedShifts));
+=======
+ON w.id = ia."WerkerId"
+WHERE ia.type='invite' AND w.id=${id} AND ia.status='pending'`)
+  .then(([shifts, metadata]) => shifts);
+
+/**
+ * gets all shifts a werker has accepted, either past or future
+ *
+ * @param {number} id - werker id from DB
+ * @param {string} histOrUpcoming - either 'history' or 'upcoming'
+ * @returns {Promise<Object[]>} - An array of Shift objects
+ */
+
+const getAcceptedShifts = (id, histOrUpcoming) => {
+  const option = histOrUpcoming === 'history'
+    ? '<'
+    : '>';
+  return db.sequelize.query(`
+  SELECT * FROM "Shifts" s
+  INNER JOIN "ShiftPositions" sp
+  ON s.id=sp."ShiftId"
+  INNER JOIN "InviteApplies" ia
+  ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionPositionId"
+  INNER JOIN "Werkers" w
+  ON w.id=ia."WerkerId"
+  WHERE w.id=? AND s.time_date ${option} 'now'`, { replacements: [id] })
+    .then(queryResult => {
+      const fetchedShifts = queryResult[0];
+      return appendMakerToShifts(fetchedShifts);
+    });
+};
+>>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 /**
  * receives werker and shift info for every pending application
@@ -446,12 +475,26 @@ WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
  * @param {number} id - maker ID from DB
  */
 
+<<<<<<< HEAD
 const getFulfilledShifts = id => db.sequelize.query(`
 SELECT DISTINCT s.* FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
 ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
 WHERE s."MakerId"=?`, { replacements: [id] })
   .then(([fetchedShifts, metadata]) => fetchedShifts);
+=======
+const getFulfilledShifts = (id, histOrUpcoming) => {
+  const option = histOrUpcoming === 'history'
+    ? '<'
+    : '>';
+  return db.sequelize.query(`
+  SELECT DISTINCT s.* FROM "Shifts" s
+  INNER JOIN "ShiftPositions" sp
+  ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
+  WHERE s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
+    .then(queryResult => queryResult[0]);
+};
+>>>>>>> dbc7fde67fdcd0f1fd30cd8d1844724a252f044d
 
 module.exports = {
   getWerkerProfile,
@@ -471,7 +514,8 @@ module.exports = {
   getWerkersForShift,
   getWerkersByPosition,
   getShiftsForWerker,
-  getInvitedOrAcceptedShifts,
+  getAcceptedShifts,
+  getInvitedShifts,
   getApplicationsForShifts,
   getUnfulfilledShifts,
   getFulfilledShifts,
