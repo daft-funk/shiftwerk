@@ -13,6 +13,7 @@ const dbHelpers = require('../dbHelpers/dbHelpers.js');
 // );
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
+const twilio = require('../apiHelpers/twilio');
 
 
 const app = express();
@@ -35,6 +36,15 @@ const appendAddressToShift = async (shift, sequelizeInstance) => {
   shift.dataValues.address = address;
   return shift;
 };
+
+app.put('/text', (req, res) => {
+  const { body, to } = req.body;
+  twilio.send(body, to)
+    .then((message) => {
+      res.json(201, message.sid);
+    })
+    .catch(err => errorHandler(err, res));
+});
 
 // ----WERKER---- ////
 
