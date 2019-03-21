@@ -229,6 +229,7 @@ app.get('/makers/:makerId/applications', async (req, res) => {
   const { makerId } = req.params;
   const werkers = await dbHelpers.getApplicationsForShifts(makerId)
     .catch(err => errorHandler(err, res));
+  console.log(werkers);
   return res.status(200).json(werkers);
 });
 
