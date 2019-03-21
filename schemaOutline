@@ -50,7 +50,7 @@
 <row name="email" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
 <default>NULL</default></row>
-<row name="URL_photo" null="1" autoincrement="0">
+<row name="url_photo" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
 <default>NULL</default></row>
 <row name="bio" null="1" autoincrement="0">
@@ -88,9 +88,6 @@
 <row name="duration" null="1" autoincrement="0">
 <datatype>INTEGER</datatype>
 <default>NULL</default></row>
-<row name="address" null="1" autoincrement="0">
-<datatype>VARCHAR</datatype>
-<default>NULL</default></row>
 <row name="latitude" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
 <default>NULL</default></row>
@@ -118,7 +115,7 @@
 <row name="name" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
 <default>NULL</default></row>
-<row name="URL_photo" null="1" autoincrement="0">
+<row name="url_photo" null="1" autoincrement="0">
 <datatype>MEDIUMTEXT</datatype>
 <default>NULL</default></row>
 <row name="phone" null="1" autoincrement="0">
@@ -256,7 +253,7 @@
 <datatype>INTEGER</datatype>
 <default>NULL</default><relation table="werker" row="id" />
 </row>
-<row name="URL_photo" null="1" autoincrement="0">
+<row name="url_photo" null="1" autoincrement="0">
 <datatype>VARCHAR</datatype>
 <default>NULL</default></row>
 <key type="PRIMARY" name="">
