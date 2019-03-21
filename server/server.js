@@ -227,11 +227,9 @@ app.get('/werkers/:werkerId/invitations', async (req, res) => {
 // get all applications to a maker's shifts
 app.get('/makers/:makerId/applications', async (req, res) => {
   const { makerId } = req.params;
-  const shifts = await dbHelpers.getApplicationsForShifts(makerId)
+  const werkers = await dbHelpers.getApplicationsForShifts(makerId)
     .catch(err => errorHandler(err, res));
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, true))).catch(err => errorHandler(err, res));
-  return res.status(200).json(shiftsWithAddress);
+  return res.status(200).json(werkers);
 });
 
 // get all unfulfilled shifts of a maker

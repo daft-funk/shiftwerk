@@ -456,17 +456,18 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
  */
 
 const getApplicationsForShifts = id => db.sequelize.query(`
-SELECT w.*, s.* FROM "Werkers" w
+SELECT DISTINCT w.*, s.name, p.position FROM "Werkers" w
 INNER JOIN "InviteApplies" ia
 ON w.id=ia."WerkerId"
 INNER JOIN "ShiftPositions" sp
-ON sp."ShiftId"=ia."ShiftPositionShiftId AND sp."PositionId"=ia."ShiftPositionPositionId"
+ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionPositionId"
 INNER JOIN "Shifts" s
 ON s.id=sp."ShiftId"
 INNER JOIN "Makers" m
 ON m.id=s."MakerId"
-WHERE ia.status = 'pending' AND ia.type = 'applied' AND m.id=?`,
-{ replacements: [id] })
+INNER JOIN "Positions" p
+ON sp."PositionId"=p.id
+WHERE ia.status = 'pending' AND ia.type = 'apply' AND m.id=${id}`)
   .then(([fetchedShiftsAndWerkers, metadata]) => fetchedShiftsAndWerkers);
 
 /**
