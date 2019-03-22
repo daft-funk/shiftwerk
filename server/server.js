@@ -289,6 +289,17 @@ app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
     });
 });
 
+app.put('/shifts/:shiftId/:werkerId/rating/:type/:rating', async (req, res) => {
+  const {
+    shiftId,
+    werkerId,
+    rating,
+    type,
+  } = req.params;
+  const newRating = await dbHelpers.rateShift(shiftId, werkerId, rating, type).catch(err => errorHandler(err, res));
+  return res.send(201, newRating);
+});
+
 app.put('/auth', (req, res) => {
   const { tokens } = google;
 });
