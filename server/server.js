@@ -4,13 +4,19 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
+const jwt = require('jsonwebtoken');
 const { google } = require('googleapis');
-// TODO need to make sure this is the correct path for dbHelpers
+
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
-// const oauth2Client = new google.auth.OAuth2(
-//   '347712232584-9dv95ud3ilg9bk7vg8i0biqav62fh1q7.apps.googleusercontent.com',
-//   'WBbo3VF1_r9zsOovnfdi0h1Z',
-// );
+
+const oauth2Client = new google.auth.OAuth2(
+  process.env.GOOGLE_CLIENT_ID,
+  process.env.GOOGLE_CLIENT_SECRET,
+);
+const people = google.people({
+  version: 'v1',
+  auth: oauth2Client,
+});
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
@@ -20,6 +26,14 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+const getProfile = async (idToken) => {
+  const decoded = jwt.decode(idToken);
+  const res = await people.people.get({
+    resourceName: `people/${decoded.sub}`,
+    personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
+  }).catch(err => console.error(err));
+  return res.data;
+};
 
 const errorHandler = (err, res) => {
   console.error(err);
@@ -70,27 +84,32 @@ app.get('/werkers/search/:positionName', (req, res) => {
 
 /**
  * PUT /werkers
- * expects body with following properties:
- *  name_first
- *  name_last
- *  email
- *  url_photo
- *  bio
- *  phone
- *  last_minute *default false
- *  certifications[] *optional
- *  positions[] *optional
+ * expects JWT as body
  * creates new resource in db
  * sends back new db record
  */
 
 app.put('/werkers', (req, res) => {
-  dbHelpers.addWerker(req.body)
-    .then(newWerker => res.json(201, newWerker))
-    .catch((err) => {
-      console.error(err);
-      res.send(500, 'Something went wrong!');
-    });
+  console.log(req.body);
+  const newJWT = req.body;
+  oauth2Client.credentials = newJWT;
+  return getProfile(newJWT.id_token)
+    .then((profile) => {
+      const newWerker = {
+        name_first: profile.names ? profile.names.givenName : '',
+        name_last: profile.names ? profile.names.familyName : '',
+        email: profile.emailAddresses ? profile.emailAddresses[0].value : '',
+        url_photo: profile.photos ? profile.photos[0].url : '',
+        phone: profile.phoneNumbers ? profile.phoneNumbers[0].value : '', // this is a guess!
+        bio: '',
+        certifications: [],
+        positions: [],
+      };
+      console.log(newWerker);
+      return dbHelpers.addWerker(newWerker);
+    })
+    .then(werker => res.json(201, werker))
+    .catch(err => errorHandler(err, res));
 });
 
 // ----MAKER---- //
@@ -107,6 +126,10 @@ app.put('/werkers', (req, res) => {
  */
 
 app.put('/makers', (req, res) => {
+  const { idToken } = req.body;
+  const decoded = jwt.decode(idToken);
+  console.log(decoded);
+  return;
   models.Maker.create(req.body)
     .then(newMaker => res.json(201, newMaker))
     .catch((err) => {
