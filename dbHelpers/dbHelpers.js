@@ -439,7 +439,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
     ? '<'
     : '>';
   return db.sequelize.query(`
-  SELECT * FROM "Shifts" s
+  SELECT s.* FROM "Shifts" s
   INNER JOIN "ShiftPositions" sp
   ON s.id=sp."ShiftId"
   INNER JOIN "InviteApplies" ia
