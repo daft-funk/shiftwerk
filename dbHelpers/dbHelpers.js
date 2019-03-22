@@ -13,7 +13,7 @@ const db = require('../db/index');
 const addRatingToWerker = werker => db.sequelize.query(`
 SELECT AVG(rating) FROM "Ratings" r
 WHERE r."WerkerId"=${werker.id} AND r.type='werker'`)
-  .then(([rating, metadata]) => Object.assign(werker, { rating }));
+  .spread(rating => Object.assign(werker, { rating }));
 
 /**
  * attaches a found werker's certifications and positions
@@ -30,7 +30,7 @@ const appendCertsRatingsAndPositionsToWerkers = werkers => Promise.all(werkers.m
       INNER JOIN "Werkers" w
       ON w.id=wc."WerkerId"
       WHERE w.id=?`, { replacements: [werker.id] })
-  .then(certifications => Object.assign(werker, { certifications: certifications[0] }))
+  .spread(certifications => Object.assign(werker, { certifications }))
   .then(werkerWithCerts => db.sequelize.query(`
       SELECT p.position
       FROM "Positions" p
@@ -39,7 +39,7 @@ const appendCertsRatingsAndPositionsToWerkers = werkers => Promise.all(werkers.m
       INNER JOIN "Werkers" w
       ON w.id=wp."WerkerId"
       WHERE w.id=?`, { replacements: [werkerWithCerts.id] })
-    .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] }))
+    .spread(positions => Object.assign(werkerWithCerts, { positions }))
     .then(werkerWithCertsAndPositions => addRatingToWerker(werkerWithCertsAndPositions)))));
 
 /**
@@ -70,8 +70,7 @@ const bulkAddCertificationToWerker = (werker, certifications) => Promise.all(cer
  */
 const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
   .map(position => db.models.Position.upsert(position, { returning: true })
-    // eslint-disable-next-line no-unused-vars
-    .then(([newPosition, updated]) => newPosition.addWerker(werker))));
+    .spread(newPosition => newPosition.addWerker(werker))));
 
 /**
  * adds new werker to DB, including certifications and positions
@@ -91,7 +90,7 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
  * @param {string} info.positions.position
  */
 const addWerker = info => db.models.Werker.upsert(info, { returning: true })
-  .then(([newWerker, updated]) => bulkAddCertificationToWerker(newWerker, info.certifications)
+  .spread(newWerker => bulkAddCertificationToWerker(newWerker, info.certifications)
     .then(() => bulkAddPositionToWerker(newWerker, info.positions)));
 
 /**
@@ -127,7 +126,7 @@ const getShiftsByTerm = async (terms) => {
   INNER JOIN "Positions" p
   ON p.id=sp."PositionId"
   WHERE ${conditions.position} AND ${conditions.payment_amnt} AND ${conditions.payment_type} AND sp.filled=false`)
-    .then(([shifts, metadata]) => shifts);
+    .spread(shifts => shifts);
 };
 
 /**
@@ -148,7 +147,7 @@ INNER JOIN "Positions" p
 INNER JOIN "ShiftPositions" sp
   ON p.id=sp."PositionId"
 WHERE sp."ShiftId"=?`, { replacements: [id] })
-  .then(([fetchedWerkers, metadata]) => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
+  .spread(fetchedWerkers => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * gets all werkers with a specific position
@@ -165,7 +164,7 @@ const getWerkersByPosition = position => db.sequelize.query(`
   INNER JOIN "Positions" p
     ON p.id=wp."PositionId"
   WHERE p.position=?`, { replacements: [position] })
-  .then(([fetchedWerkers, metadata]) => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
+  .spread(fetchedWerkers => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * Function to invite a werker to a shift - creates a new invitation
@@ -293,7 +292,7 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   UPDATE "ShiftPositions" sp
   SET filled=true
   WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
-    .then(([updatedShiftPosition, metadata]) => updatedShiftPosition);
+    .spread(updatedShiftPosition => updatedShiftPosition);
 });
 
 /**
@@ -361,7 +360,7 @@ SELECT AVG(rating) FROM "Ratings" r
 INNER JOIN "Shifts" s
 ON s.id=r."ShiftId"
 WHERE s."MakerId"=${id} AND r.type='maker'`)
-  .then(([rating, metadata]) => rating);
+  .spread(rating => rating);
 
 /**
  * appends maker info to any number of shifts
@@ -392,10 +391,7 @@ INNER JOIN "WerkerPosition" wp
 INNER JOIN "Werkers" w
   ON w.id=wp."WerkerId"
 WHERE w.id=?`, { replacements: [id] })
-  .then((queryResult) => {
-    const fetchedShifts = queryResult[0];
-    return appendMakerAndRatingToShifts(fetchedShifts);
-  });
+  .spread(shifts => appendMakerAndRatingToShifts(shifts));
 
 /**
  * deletes a shift from the database by id
@@ -421,7 +417,7 @@ ON sp. "ShiftId" = ia."ShiftPositionShiftId" AND sp."PositionId" = ia."ShiftPosi
 INNER JOIN "Werkers" w
 ON w.id = ia."WerkerId"
 WHERE ia.type='invite' AND w.id=${id} AND ia.status='pending'`)
-  .then(([shifts, metadata]) => shifts);
+  .spread(shifts => shifts);
 
 /**
  * gets all shifts a werker has accepted, either past or future
@@ -444,9 +440,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
   INNER JOIN "Werkers" w
   ON w.id=ia."WerkerId"
   WHERE w.id=? AND s.time_date ${option} 'now'`, { replacements: [id] })
-    .then(([fetchedShifts, metadata]) => {
-      return appendMakerAndRatingToShifts(fetchedShifts);
-    });
+    .spread(fetchedShifts => appendMakerAndRatingToShifts(fetchedShifts));
 };
 
 /**
@@ -456,18 +450,19 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
  */
 
 const getApplicationsForShifts = id => db.sequelize.query(`
-SELECT w.*, s.* FROM "Werkers" w
+SELECT DISTINCT w.*, s.name, p.position FROM "Werkers" w
 INNER JOIN "InviteApplies" ia
 ON w.id=ia."WerkerId"
 INNER JOIN "ShiftPositions" sp
-ON sp."ShiftId"=ia."ShiftPositionShiftId AND sp."PositionId"=ia."ShiftPositionPositionId"
+ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionPositionId"
 INNER JOIN "Shifts" s
 ON s.id=sp."ShiftId"
 INNER JOIN "Makers" m
 ON m.id=s."MakerId"
-WHERE ia.status = 'pending' AND ia.type = 'applied' AND m.id=?`,
-{ replacements: [id] })
-  .then(([fetchedShiftsAndWerkers, metadata]) => fetchedShiftsAndWerkers);
+INNER JOIN "Positions" p
+ON sp."PositionId"=p.id
+WHERE ia.status = 'pending' AND ia.type = 'apply' AND m.id=${id}`)
+  .spread(fetchedWerkers => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * Gets all shifts that have some unfilled positions for a maker
@@ -480,7 +475,7 @@ SELECT DISTINCT s.* FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
 ON s.id=sp."ShiftId"
 WHERE sp.filled=false AND s."MakerId"=?`, { replacements: [id] })
-  .then(([fetchedShifts, metadata]) => fetchedShifts);
+  .spread(fetchedShifts => fetchedShifts);
 
 /**
  * Gets all shifts that have no unfilled positions for a maker
@@ -497,7 +492,7 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
   INNER JOIN "ShiftPositions" sp
   ON s.id=sp."ShiftId" AND (sp.filled=false) IS NOT TRUE
   WHERE s."MakerId"=? AND s.time_date ${option} 'now'`, { replacements: [id] })
-    .then(([shifts, metadata]) => shifts);
+    .spread(shifts => shifts);
 };
 
 const rateShift = (shiftId, werkerId, rating, type) => db.sequelize.query(`
