@@ -6,13 +6,23 @@ const db = require('../db/index');
 // WERKER
 
 /**
+ * gets the average of ratings received by werker
+ *
+ * @param {number} id - Werker id from DB
+ */
+const addRatingToWerker = werker => db.sequelize.query(`
+SELECT AVG(rating) FROM "Ratings" r
+WHERE r."WerkerId"=${werker.id} AND r.type='werker'`)
+  .then(([rating, metadata]) => Object.assign(werker, { rating }));
+
+/**
  * attaches a found werker's certifications and positions
  *
  * @param {Object[]} werkers - Array of werker objects from SQL query
  * @returns {Promise<Object[]>} - Modified input array
  */
 
-const appendCertsAndPositionsToWerkers = werkers => Promise.all(werkers.map(werker => db.sequelize.query(`
+const appendCertsRatingsAndPositionsToWerkers = werkers => Promise.all(werkers.map(werker => db.sequelize.query(`
       SELECT c.*, wc.*
       FROM "Certifications" c
       INNER JOIN "WerkerCertifications" wc
@@ -29,7 +39,8 @@ const appendCertsAndPositionsToWerkers = werkers => Promise.all(werkers.map(werk
       INNER JOIN "Werkers" w
       ON w.id=wp."WerkerId"
       WHERE w.id=?`, { replacements: [werkerWithCerts.id] })
-    .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] })))));
+    .then(positions => Object.assign(werkerWithCerts, { positions: positions[0] }))
+    .then(werkerWithCertsAndPositions => addRatingToWerker(werkerWithCertsAndPositions)))));
 
 /**
  * adds any number of certifications to a werker
@@ -137,7 +148,7 @@ INNER JOIN "Positions" p
 INNER JOIN "ShiftPositions" sp
   ON p.id=sp."PositionId"
 WHERE sp."ShiftId"=?`, { replacements: [id] })
-  .then(([fetchedWerkers, metadata]) => appendCertsAndPositionsToWerkers(fetchedWerkers));
+  .then(([fetchedWerkers, metadata]) => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * gets all werkers with a specific position
@@ -154,7 +165,7 @@ const getWerkersByPosition = position => db.sequelize.query(`
   INNER JOIN "Positions" p
     ON p.id=wp."PositionId"
   WHERE p.position=?`, { replacements: [position] })
-  .then(([fetchedWerkers, metadata]) => appendCertsAndPositionsToWerkers(fetchedWerkers));
+  .then(([fetchedWerkers, metadata]) => appendCertsRatingsAndPositionsToWerkers(fetchedWerkers));
 
 /**
  * Function to invite a werker to a shift - creates a new invitation
@@ -345,15 +356,24 @@ const getAllShifts = (offset = 0) => db.models.Shift.findAll({
   ],
 });
 
+const getMakerRating = id => db.sequelize.query(`
+SELECT AVG(rating) FROM "Ratings" r
+INNER JOIN "Shifts" s
+ON s.id=r."ShiftId"
+WHERE s."MakerId"=${id} AND r.type='maker'`)
+  .then(([rating, metadata]) => rating);
+
 /**
  * appends maker info to any number of shifts
  *
  * @param {Object[]} shifts - Shift instances from DB
  */
-const appendMakerToShifts = shifts => Promise.all(shifts.map(shift => db.sequelize.query(`
+const appendMakerAndRatingToShifts = shifts => Promise.all(shifts.map(shift => db.sequelize.query(`
   SELECT m.* from "Makers" m, "Shifts" s
   WHERE m.id=s."MakerId" AND s.id=${shift.id}`)
-  .then(maker => Object.assign(shift, { maker: maker[0] }))));
+  .then(maker => Object.assign(shift, { maker: maker[0] }))
+  .then(augmentedShift => getMakerRating(augmentedShift.MakerId)
+    .then(rating => Object.assign(augmentedShift, { rating })))));
 
 /**
  * fetches all shifts werker is eligible for based on positions
@@ -374,7 +394,7 @@ INNER JOIN "Werkers" w
 WHERE w.id=?`, { replacements: [id] })
   .then((queryResult) => {
     const fetchedShifts = queryResult[0];
-    return appendMakerToShifts(fetchedShifts);
+    return appendMakerAndRatingToShifts(fetchedShifts);
   });
 
 /**
@@ -425,7 +445,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
   ON w.id=ia."WerkerId"
   WHERE w.id=? AND s.time_date ${option} 'now'`, { replacements: [id] })
     .then(([fetchedShifts, metadata]) => {
-      return appendMakerToShifts(fetchedShifts);
+      return appendMakerAndRatingToShifts(fetchedShifts);
     });
 };
 
@@ -480,6 +500,9 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
     .then(([shifts, metadata]) => shifts);
 };
 
+const rateShift = (shiftId, werkerId, rating, type) => db.sequelize.query(`
+INSERT INTO "Ratings" ("ShiftId", "WerkerId", rating, type, "createdAt", "updatedAt") VALUES (${shiftId}, ${werkerId}, ${rating}, '${type}', 'now', 'now')`);
+
 module.exports = {
   getWerkerProfile,
   inviteWerker,
@@ -503,4 +526,5 @@ module.exports = {
   getApplicationsForShifts,
   getUnfulfilledShifts,
   getFulfilledShifts,
+  rateShift,
 };
