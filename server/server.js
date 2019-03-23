@@ -348,6 +348,27 @@ app.get('/makers/:makerId/fulfilled/:histOrUpcoming', async (req, res) => {
 
 // MAKER/WERKER //
 
+app.get('/favorites', (req, res) => {
+  const { id, type } = req.query;
+  return dbHelpers.getFavorites(id, type)
+    .then(faves => res.status(200).json(faves))
+    .catch(err => errorHandler(err));
+});
+
+app.put('/favorites', (req, res) => {
+  const { makerId, werkerId, type } = req.body;
+  return dbHelpers.addFavorite(makerId, werkerId, type)
+    .then(fave => res.status(201).json(fave))
+    .catch(err => errorHandler(err, res));
+});
+
+app.delete('/favorites', (req, res) => {
+  const { makerId, werkerId, type } = req.body;
+  return dbHelpers.deleteFavorite(makerId, werkerId, type)
+    .then(deleted => res.status(201).json(deleted))
+    .catch(err => errorHandler(err, res));
+});
+
 // get detailed shift info by Id for maker and werker
 app.get('/shifts/:shiftId', async (req, res) => {
   const { shiftId } = req.params;

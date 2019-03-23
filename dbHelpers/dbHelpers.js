@@ -202,6 +202,34 @@ const getWerkerProfile = id => db.models.Werker.findOne({
   ],
 });
 
+// WERKER/MAKER //
+
+const addFavorite = (makerId, werkerId, type) => db.models.Favorite.upsert({
+  MakerId: makerId,
+  WerkerId: werkerId,
+  type,
+}, {
+  returning: true,
+});
+
+const deleteFavorite = (makerId, werkerId, type) => db.models.Favorite.destroy({
+  where: {
+    MakerId: makerId,
+    WerkerId: werkerId,
+    type,
+  },
+});
+
+const getFavorites = (id, type) => {
+  const propToFind = type[0].toUpperCase().concat(type.slice(1).concat('Id'));
+  return db.models.Favorite.findAll({
+    where: {
+      [propToFind]: id,
+      type,
+    },
+  });
+};
+
 // SHIFT
 
 /**
@@ -530,4 +558,7 @@ module.exports = {
   getUnfulfilledShifts,
   getFulfilledShifts,
   rateShift,
+  addFavorite,
+  deleteFavorite,
+  getFavorites,
 };
