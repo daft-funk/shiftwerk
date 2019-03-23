@@ -26,7 +26,6 @@ const models = {
   Favorite: sequelize.import('./Favorite'),
   Rating: sequelize.import('./Rating'),
   InviteApply: sequelize.import('./InviteApply'),
-
 };
 
 Object.keys(models).forEach((modelName) => {
