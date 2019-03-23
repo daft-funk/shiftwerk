@@ -46,11 +46,6 @@ const addToCalendar = async (token) => {
   oauth2Client.setCredentials({
     access_token: token.access_token,
   });
-  const cal = await calendar.events.list({
-    auth: oauth2Client,
-    calendarId: 'aeginidae@gmail.com',
-  });
-  console.dir(cal.data);
   const res = await calendar.events.insert({
     calendarId: 'aeginidae@gmail.com',
     resource: {
@@ -131,7 +126,6 @@ app.put('/werkers', (req, res) => {
   console.log(req.body);
   const newJWT = req.body;
   // oauth2Client.credentials = newJWT;
-  return addToCalendar(newJWT);
   return getProfile(newJWT)
     .then((profile) => {
       console.log(profile);
@@ -171,10 +165,9 @@ app.put('/werkers/login', (req, res) => {
  */
 
 app.put('/makers', (req, res) => {
-  const { idToken } = req.body;
-  const decoded = jwt.decode(idToken);
-  console.log(decoded);
-  return;
+  // const { idToken } = req.body;
+  // const decoded = jwt.decode(idToken);
+  // console.log(decoded);
   models.Maker.create(req.body)
     .then(newMaker => res.json(201, newMaker))
     .catch((err) => {
