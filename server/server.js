@@ -30,16 +30,17 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const getProfile = async (idToken) => {
+const getProfile = (idToken) => {
   oauth2Client.setCredentials({
     access_token: idToken.access_token,
     refresh_token: '',
   });
-  const res = await people.people.get({
-    resourceName: `people/me`,
+  return people.people.get({
+    resourceName: 'people/me',
     personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
-  }).catch(err => console.error(err));
-  return res.data;
+  })
+    .then(res => res.data)
+    .catch(err => err);
 };
 
 const addToCalendar = async (token) => {
@@ -148,7 +149,17 @@ app.put('/werkers', (req, res) => {
 
 app.put('/werkers/login', (req, res) => {
   const newJWT = req.body;
-
+  return getProfile(newJWT)
+    .then((profile) => {
+      console.log(profile);
+      return models.Werker.findOne({
+        where: {
+          email: profile.emailAddresses[0].value,
+        },
+      });
+    })
+    .then(werker => res.json(201, werker))
+    .catch(err => errorHandler(err));
 });
 
 // ----MAKER---- //
@@ -165,15 +176,38 @@ app.put('/werkers/login', (req, res) => {
  */
 
 app.put('/makers', (req, res) => {
-  // const { idToken } = req.body;
-  // const decoded = jwt.decode(idToken);
-  // console.log(decoded);
-  models.Maker.create(req.body)
-    .then(newMaker => res.json(201, newMaker))
-    .catch((err) => {
-      console.error(err);
-      res.send(500, 'Something went wrong!');
-    });
+  console.log(req.body);
+  const newJWT = req.body;
+  // oauth2Client.credentials = newJWT;
+  return getProfile(newJWT)
+    .then((profile) => {
+      console.log(profile);
+      const newMaker = {
+        name: profile.names ? profile.names[0].displayName : '',
+        email: profile.emailAddresses ? profile.emailAddresses[0].value : '',
+        url_photo: profile.photos ? profile.photos[0].url : '',
+        phone: profile.phoneNumbers ? profile.phoneNumbers[0].value : '', // this is a guess!
+      };
+      console.log(newMaker);
+      return models.Maker.upsert(newMaker, { returning: true });
+    })
+    .then(maker => res.json(201, maker))
+    .catch(err => errorHandler(err, res));
+});
+
+app.put('/makers/login', (req, res) => {
+  const newJWT = req.body;
+  return getProfile(newJWT)
+    .then((profile) => {
+      console.log(profile);
+      return models.Maker.findOne({
+        where: {
+          email: profile.emailAddresses[0].value,
+        },
+      });
+    })
+    .then(maker => res.json(201, Object.assign(maker, { type: 'maker' })))
+    .catch(err => res.json(201, 'bad credentials'));
 });
 
 // get a maker's profile
