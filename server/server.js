@@ -17,6 +17,10 @@ const people = google.people({
   version: 'v1',
   auth: oauth2Client,
 });
+const calendar = google.calendar({
+  version: 'v3',
+  auth: oauth2Client,
+});
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
@@ -27,12 +31,46 @@ app.use(bodyParser.json());
 app.use(cors());
 
 const getProfile = async (idToken) => {
-  const decoded = jwt.decode(idToken);
+  oauth2Client.setCredentials({
+    access_token: idToken.access_token,
+    refresh_token: '',
+  });
   const res = await people.people.get({
-    resourceName: `people/${decoded.sub}`,
+    resourceName: `people/me`,
     personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
   }).catch(err => console.error(err));
   return res.data;
+};
+
+const addToCalendar = async (token) => {
+  oauth2Client.setCredentials({
+    access_token: token.access_token,
+  });
+  const cal = await calendar.events.list({
+    auth: oauth2Client,
+    calendarId: 'aeginidae@gmail.com',
+  });
+  console.dir(cal.data);
+  const res = await calendar.events.insert({
+    calendarId: 'aeginidae@gmail.com',
+    resource: {
+      summary: 'hello world',
+      location: '6363 St Charles Ave, New Orleans, LA 70115',
+      description: 'hello',
+      start: {
+        dateTime: '2019-03-25T09:00:00-07:00',
+        timeZone: 'America/Chicago',
+      },
+      end: {
+        dateTime: '2019-03-25T10:00:00-07:00',
+        timeZone: 'America/Chicago',
+      },
+      attendees: [
+        { email: 'aeginidae@gmail.com' },
+      ],
+    },
+  });
+  console.log(res.data);
 };
 
 const errorHandler = (err, res) => {
@@ -92,12 +130,14 @@ app.get('/werkers/search/:positionName', (req, res) => {
 app.put('/werkers', (req, res) => {
   console.log(req.body);
   const newJWT = req.body;
-  oauth2Client.credentials = newJWT;
-  return getProfile(newJWT.id_token)
+  // oauth2Client.credentials = newJWT;
+  return addToCalendar(newJWT);
+  return getProfile(newJWT)
     .then((profile) => {
+      console.log(profile);
       const newWerker = {
-        name_first: profile.names ? profile.names.givenName : '',
-        name_last: profile.names ? profile.names.familyName : '',
+        name_first: profile.names ? profile.names[0].givenName : '',
+        name_last: profile.names ? profile.names[0].familyName : '',
         email: profile.emailAddresses ? profile.emailAddresses[0].value : '',
         url_photo: profile.photos ? profile.photos[0].url : '',
         phone: profile.phoneNumbers ? profile.phoneNumbers[0].value : '', // this is a guess!
@@ -110,6 +150,11 @@ app.put('/werkers', (req, res) => {
     })
     .then(werker => res.json(201, werker))
     .catch(err => errorHandler(err, res));
+});
+
+app.put('/werkers/login', (req, res) => {
+  const newJWT = req.body;
+
 });
 
 // ----MAKER---- //
