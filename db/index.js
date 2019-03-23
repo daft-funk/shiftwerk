@@ -20,7 +20,6 @@ const models = {
   Werker: sequelize.import('./Werker'),
   ShiftPosition: sequelize.import('./ShiftPosition'),
   Position: sequelize.import('./Position'),
-  PaymentType: sequelize.import('./PaymentType'),
   Maker: sequelize.import('./Maker'),
   Certification: sequelize.import('./Certification'),
   WerkerCertification: sequelize.import('./WerkerCertification'),
