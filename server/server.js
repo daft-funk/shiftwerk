@@ -74,15 +74,23 @@ const errorHandler = (err, res) => {
   res.send(500, 'Something went wrong!');
 };
 
-const appendAddressToShift = async (shift, sequelizeInstance) => {
-  const address = await reverseGeocode(shift.lat, shift.long);
-  console.log(address);
-  if (!sequelizeInstance) {
-    return Object.assign(shift, { address });
-  }
-  // eslint-disable-next-line no-param-reassign
-  shift.dataValues.address = address;
-  return shift;
+const appendAddressToShift = (shift, sequelizeInstance) => {
+  return reverseGeocode(shift.lat, shift.long)
+    .then((address) => {
+      console.log(address);
+      if (!sequelizeInstance) {
+        return Object.assign(shift, { address });
+      }
+      // eslint-disable-next-line no-param-reassign
+      shift.dataValues.address = address;
+      return shift;
+    }).catch((err) => {
+      if (!sequelizeInstance) {
+        return Object.assign(shift, { address: 'We\re having some trouble with that. Please check again later!' });
+      }
+      shift.dataValues.address = 'We\re having some trouble with that. Please check again later!';
+      return shift;
+    });
 };
 
 app.put('/text', (req, res) => {
@@ -267,6 +275,7 @@ app.get('/werkers/:werkerId/invitations', async (req, res) => {
   const shifts = await dbHelpers.getInvitedShifts(werkerId).catch(err => errorHandler(err, res));
   const shiftsWithAddress = await Promise.all(shifts
     .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
+  console.log(shiftsWithAddress);
   return res.status(200).json(shiftsWithAddress);
 });
 
