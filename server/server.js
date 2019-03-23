@@ -243,18 +243,27 @@ app.get('/werkers/:werkerId/invitations', async (req, res) => {
  * expects body with the following properties:
  *  MakerId
  *  name
- *  time_date
- *  duration
+ *  start
+ *  end
  *  address
  *  description
  *  positions[]
  *   position is obj with:
  *   position
  *   payment_amnt
- *  payment_type
+ *   payment_type
  */
 app.put('/shifts', async (req, res) => {
   const { body } = req;
+  body.positions = body.positions.map((position) => {
+    const digit = /\d/.exec(Object.keys(position)[1])[0];
+    console.log(digit);
+    return {
+      position: position[`position${digit}`],
+      payment_amnt: position[`payment_amnt${digit}`],
+      payment_type: position[`payment_type${digit}`],
+    };
+  });
   const { lat, lon } = await geocode(body.address);
   body.lat = lat;
   body.long = lon;
