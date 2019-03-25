@@ -1,3 +1,4 @@
+/* eslint-disable no-confusing-arrow */
 /* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 // const sequelize = require('sequelize');
@@ -75,7 +76,7 @@ const appendCertsRatingsAndPositionsToWerkers = werkers => Promise.all(werkers.m
 const bulkAddCertificationToWerker = (werker, certifications) => Promise.all(certifications
   .map(certification => db.models.Certification.upsert(certification, { returning: true })
     // eslint-disable-next-line no-unused-vars
-    .then(([newCert, updated]) => db.models.WerkerCertification.upsert({
+    .spread(([newCert, updated]) => db.models.WerkerCertification.upsert({
       WerkerId: werker.id,
       CertificationId: newCert.id,
       url_Photo: certification.url_Photo,
@@ -112,8 +113,43 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
  * @param {string} info.positions.position
  */
 const addWerker = info => db.models.Werker.upsert(info, { returning: true })
-  .spread(newWerker => bulkAddCertificationToWerker(newWerker, info.certifications)
-    .then(() => bulkAddPositionToWerker(newWerker, info.positions)));
+  .spread(newWerker => info.certifications
+    ? bulkAddCertificationToWerker(newWerker, info.certifications)
+    : null
+      .then(() => info.positions
+        ? bulkAddPositionToWerker(newWerker, info.positions)
+        : newWerker));
+
+/**
+ * updates Werker entry in DB
+ *
+ * @param {number} werkerId
+ * @param {object} info - new values
+ * @param {string} [info.name_first]
+ * @param {string} [info.name_last]
+ * @param {string} [info.email]
+ * @param {string} [info.phone]
+ * @param {string} [info.bio]
+ * @param {object[]} [info.certifications]
+ * @param {string} [info.certifications.cert_name]
+ * @param {string} [info.certifications.url_Photo]
+ * @param {object[]} [info.positions]
+ * @param {string} [info.positions.position]
+ * @param {number} [info.lat]
+ * @param {number} [info.long]
+ */
+const updateWerker = (werkerId, info) => db.models.Werker.update(info, {
+  where: {
+    id: werkerId,
+  },
+  returning: true,
+})
+  .spread(updatedWerker => info.certifications
+    ? bulkAddCertificationToWerker(updatedWerker, info.certifications)
+    : null
+      .then(() => info.positions
+        ? bulkAddPositionToWerker(updatedWerker, info.positions)
+        : updatedWerker));
 
 /**
  * Function to search for shifts by various terms
@@ -582,6 +618,7 @@ module.exports = {
   addWerker,
   bulkAddCertificationToWerker,
   bulkAddPositionToWerker,
+  updateWerker,
   getWerkersForShift,
   getWerkersByPosition,
   getShiftsForWerker,
