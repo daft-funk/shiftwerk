@@ -120,12 +120,18 @@ const addWerker = info => db.models.Werker.upsert(info, { returning: true })
  *
  * @param {object} terms - an object with search terms
  * @param {string} terms.position - required position
- * @param {number} terms.proximity - maximum distance, in miles
+ * @param {number} terms.proximity - maximum distance, in miles (default 3)
  * @param {number} terms.payment_amnt - minimum pay to accept
  * @param {string} terms.payment_type - payment type to restrict results to
+ * @param {number} werkerId - for proximity calculation
  */
-const getShiftsByTerm = async (terms) => {
+const getShiftsByTerm = async (terms, werkerId) => {
   const searchTerms = terms;
+  const werker = await db.models.Werker.findOne({
+    where: {
+      id: werkerId,
+    },
+  });
   if (terms.position) {
     const position = await db.models.Position.findOne({
       where: {
@@ -133,11 +139,9 @@ const getShiftsByTerm = async (terms) => {
       },
     });
     searchTerms.position = position.dataValues.id;
-    console.log(searchTerms);
   }
   const conditions = {
     position: terms.position ? `sp."PositionId" = ${terms.position}` : 'sp."PositionId" IS NOT NULL',
-    // proximity is future magic
     payment_amnt: terms.payment_amnt ? `sp.payment_amnt >= ${terms.payment_amnt}` : 'sp.payment_amnt IS NOT NULL',
     payment_type: terms.payment_type ? `s.payment_type = ${terms.payment_type}` : 's.payment_type IS NOT NULL',
   };
@@ -148,7 +152,10 @@ const getShiftsByTerm = async (terms) => {
   INNER JOIN "Positions" p
   ON p.id=sp."PositionId"
   WHERE ${conditions.position} AND ${conditions.payment_amnt} AND ${conditions.payment_type} AND sp.filled=false`)
-    .spread(shifts => shifts);
+    .spread(shifts => filterByDistance((terms.proximity || 3), {
+      latitude: werker.lat,
+      longitude: werker.long,
+    }, shifts));
 };
 
 /**
