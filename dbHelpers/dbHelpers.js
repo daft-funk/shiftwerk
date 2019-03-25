@@ -307,6 +307,7 @@ const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
       ShiftId: shift.id,
       PositionId: newPosition.id,
       payment_amnt: position.payment_amnt,
+      payment_type: position.payment_type,
     }, {
       returning: true,
     }))));
@@ -324,22 +325,22 @@ const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
 const createShift = ({
   MakerId,
   name,
-  time_date,
-  duration,
+  start,
+  end,
   lat,
   long,
+  address,
   description,
   positions,
-  payment_type,
 }) => db.models.Shift.create({
   MakerId,
   name,
-  time_date,
-  duration,
+  start,
+  end,
   lat,
   long,
+  address,
   description,
-  payment_type,
 })
   .then(newShift => bulkAddNewPositionsToShift(newShift, positions));
 
@@ -417,9 +418,9 @@ const getShiftsById = shiftId => db.models.Shift.findOne({
  * @returns {Promise<any[]>} - array of ten sequelize model instances
  */
 const getAllShifts = (offset = 0) => db.models.Shift.findAll({
-  limit: 10,
-  offset: offset * 10,
-  order: [['time_date', 'DESC']],
+  // limit: 10,
+  // offset: offset * 10,
+  order: [['start', 'DESC']],
   include: [
     {
       model: db.models.Maker,
