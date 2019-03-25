@@ -163,7 +163,9 @@ app.put('/werkers', (req, res) => {
 app.patch('/werkers/:werkerId', (req, res) => {
   const { werkerId } = req.params;
   const settings = req.body;
-  return dbHelpers.updateWerker(werkerId, settings);
+  return dbHelpers.updateWerker(werkerId, settings)
+    .then(updatedWerker => res.status(204).send())
+    .catch(err => errorHandler(err, res));
 });
 
 app.put('/werkers/login', (req, res) => {
@@ -177,8 +179,8 @@ app.put('/werkers/login', (req, res) => {
         },
       });
     })
-    .then(werker => res.json(201, werker))
-    .catch(err => errorHandler(err));
+    .then(werker => res.status(201).json(werker))
+    .catch(err => errorHandler(err, res));
 });
 
 // ----MAKER---- //

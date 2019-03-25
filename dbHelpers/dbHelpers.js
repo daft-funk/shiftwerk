@@ -115,10 +115,10 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
 const addWerker = info => db.models.Werker.upsert(info, { returning: true })
   .spread(newWerker => info.certifications
     ? bulkAddCertificationToWerker(newWerker, info.certifications)
-    : null
+    : new Promise(resolve => resolve(newWerker))
       .then(() => info.positions
         ? bulkAddPositionToWerker(newWerker, info.positions)
-        : newWerker));
+        : new Promise(resolve => resolve(newWerker))));
 
 /**
  * updates Werker entry in DB
@@ -146,10 +146,10 @@ const updateWerker = (werkerId, info) => db.models.Werker.update(info, {
 })
   .spread(updatedWerker => info.certifications
     ? bulkAddCertificationToWerker(updatedWerker, info.certifications)
-    : null
+    : new Promise(resolve => resolve(updatedWerker))
       .then(() => info.positions
         ? bulkAddPositionToWerker(updatedWerker, info.positions)
-        : updatedWerker));
+        : new Promise(resolve => resolve(updatedWerker))));
 
 /**
  * Function to search for shifts by various terms
