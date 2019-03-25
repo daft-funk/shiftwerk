@@ -74,26 +74,6 @@ const errorHandler = (err, res) => {
   res.send(500, 'Something went wrong!');
 };
 
-const appendAddressToShift = (shift, sequelizeInstance) => {
-  return reverseGeocode(shift.lat, shift.long)
-    .then((address) => {
-      console.log(address);
-      if (!sequelizeInstance) {
-        return Object.assign(shift, { address });
-      }
-      // eslint-disable-next-line no-param-reassign
-      shift.dataValues.address = address;
-      return shift;
-    }).catch((err) => {
-      if (!sequelizeInstance) {
-        return Object.assign(shift, { address: 'We\re having some trouble with that. Please check again later!' });
-      }
-      // eslint-disable-next-line no-param-reassign
-      shift.dataValues.address = 'We\re having some trouble with that. Please check again later!';
-      return shift;
-    });
-};
-
 app.put('/text', (req, res) => {
   const { body, to } = req.body;
   twilio.send(body, to)
@@ -248,18 +228,14 @@ app.get('/makers/:makerId', (req, res) => {
 // get list of shifts by terms
 app.get('/werkers/:werkerId/shifts', async (req, res) => {
   const shifts = await dbHelpers.getShiftsByTerm(req.query).catch(err => errorHandler(err, res));
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
-  return res.status(200).json(shiftsWithAddress);
+  return res.status(200).json(shifts);
 });
 
 // gets all shifts a werker is eligible for based on positions
 app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
   const { werkerId } = req.params;
   const shifts = await dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift))).catch(err => errorHandler(err, res));
-  return res.status(200).json(shiftsWithAddress);
+  return res.status(200).json(shifts);
 });
 
 // histOrUpcoming is either 'history' or 'upcoming'
@@ -267,22 +243,22 @@ app.get('/werkers/:werkerId/shifts/:histOrUpcoming', async (req, res) => {
   const { werkerId, histOrUpcoming } = req.params;
   const shifts = await dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
     .catch(err => errorHandler(err, res));
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
-  return res.status(200).json(shiftsWithAddress);
+  return res.status(200).json(shifts);
 });
 
 // get all shifts werker is invited to
 app.get('/werkers/:werkerId/invitations', async (req, res) => {
   const { werkerId } = req.params;
   const shifts = await dbHelpers.getInvitedShifts(werkerId).catch(err => errorHandler(err, res));
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
-  console.log(shiftsWithAddress);
-  return res.status(200).json(shiftsWithAddress);
+  return res.status(200).json(shifts);
 });
 
 // MAKER-FACING //
+
+// app.get('/allshifts', (req, res) => {
+//   dbHelpers.getAllShifts()
+//     .then(shifts => res.status(200).json(shifts));
+// });
 
 /**
  * PUT /shifts
@@ -311,6 +287,7 @@ app.put('/shifts', async (req, res) => {
     };
   });
   const { lat, lon } = await geocode(body.address);
+  body.address = await reverseGeocode(lat, lon);
   body.lat = lat;
   body.long = lon;
   const shift = await dbHelpers.createShift(body)
@@ -342,9 +319,7 @@ app.get('/makers/:makerId/unfulfilled', async (req, res) => {
   const { makerId } = req.params;
   const shifts = await dbHelpers.getUnfulfilledShifts(makerId)
     .catch(err => errorHandler(err, res));
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
-  return res.status(200).json(shiftsWithAddress);
+  return res.status(200).json(shifts);
 });
 
 // get all fulfilled shifts for a maker
@@ -353,9 +328,7 @@ app.get('/makers/:makerId/fulfilled/:histOrUpcoming', async (req, res) => {
   const { makerId, histOrUpcoming } = req.params;
   const shifts = await dbHelpers.getFulfilledShifts(makerId, histOrUpcoming)
     .catch(err => errorHandler(err, res));
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
-  return res.status(200).json(shiftsWithAddress);
+  return res.status(200).json(shifts);
 });
 
 // MAKER/WERKER //
@@ -386,9 +359,7 @@ app.get('/shifts/:shiftId', async (req, res) => {
   const { shiftId } = req.params;
   // TODO check helper function name
   const shift = await dbHelpers.getShiftsById(shiftId).catch(err => errorHandler(err, res));
-  const shiftWithAddress = await appendAddressToShift(shift);
-  console.log(shiftWithAddress);
-  return res.status(200).json(shiftWithAddress);
+  return res.status(200).json(shift);
 });
 
 // apply or invite for shift
