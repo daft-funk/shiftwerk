@@ -249,16 +249,6 @@ app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
   return res.status(200).json(shiftsWithAddress);
 });
 
-// get all shifts a werker is eligible for based on positions
-app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
-  const { werkerId } = req.params;
-  const shifts = await dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
-  console.log(shifts);
-  const shiftsWithAddress = await Promise.all(shifts
-    .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
-  return res.status(200).json(shiftsWithAddress);
-});
-
 // histOrUpcoming is either 'history' or 'upcoming'
 app.get('/werkers/:werkerId/shifts/:histOrUpcoming', async (req, res) => {
   const { werkerId, histOrUpcoming } = req.params;
