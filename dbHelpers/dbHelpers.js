@@ -356,14 +356,16 @@ const createShift = ({
  */
 
 const applyOrInviteForShift = (shiftId, werkerId, positionName, inviteOrApply) => db.sequelize.query(`
-SELECT id FROM "Positions" WHERE position='${positionName}'`)
-  .then(([position, metadata]) => db.sequelize.query(`
+SELECT sp.id FROM "ShiftPositions" sp INNER JOIN "Positions" p ON p.id=sp."PositionId" INNER JOIN "Shifts" s ON s.id=sp."ShiftId" WHERE p.position='${positionName}' AND s.id=${shiftId}`)
+  .spread((shiftPositions) => {
+    console.log(shiftPositions);
+    return db.sequelize.query(`
 INSERT INTO "InviteApplies" ("WerkerId",
-"ShiftPositionShiftId", 
-"ShiftPositionPositionId", 
+"ShiftPositionId", 
 "createdAt", 
 "updatedAt", 
-"type") VALUES (${werkerId}, ${shiftId}, ${position[0].id}, 'now', 'now', '${inviteOrApply}')`));
+"type") VALUES (${werkerId}, ${shiftPositions[0].id}, 'now', 'now', '${inviteOrApply}')`);
+  });
 
 /**
  * Function used to accept shifts - updates the shift status to 'accept' or 'decline'
@@ -516,7 +518,7 @@ SELECT s.* FROM "Shifts" s
 INNER JOIN "ShiftPositions" sp
 ON s.id = sp."ShiftId"
 INNER JOIN "InviteApplies" ia
-ON sp. "ShiftId" = ia."ShiftPositionShiftId" AND sp."PositionId" = ia."ShiftPositionPositionId"
+ON sp.id=ia."ShiftPositionId"
 INNER JOIN "Werkers" w
 ON w.id = ia."WerkerId"
 WHERE ia.type='invite' AND w.id=${id} AND ia.status='pending'`)
@@ -539,7 +541,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
   INNER JOIN "ShiftPositions" sp
   ON s.id=sp."ShiftId"
   INNER JOIN "InviteApplies" ia
-  ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionPositionId"
+  ON sp.id=ia."ShiftPositionId"
   INNER JOIN "Werkers" w
   ON w.id=ia."WerkerId"
   WHERE w.id=? AND s.time_date ${option} 'now'
@@ -558,7 +560,7 @@ SELECT DISTINCT w.*, s.name, p.position FROM "Werkers" w
 INNER JOIN "InviteApplies" ia
 ON w.id=ia."WerkerId"
 INNER JOIN "ShiftPositions" sp
-ON sp."ShiftId"=ia."ShiftPositionShiftId" AND sp."PositionId"=ia."ShiftPositionPositionId"
+ON sp.id=ia."ShiftPositionId"
 INNER JOIN "Shifts" s
 ON s.id=sp."ShiftId"
 INNER JOIN "Makers" m
