@@ -1,7 +1,30 @@
+/* eslint-disable no-confusing-arrow */
 /* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 // const sequelize = require('sequelize');
+const geolib = require('geolib');
 const db = require('../db/index');
+
+/**
+ * Filters any number of shifts by distance from werker
+ *
+ * @param {number} distance - maximum distance in miles
+ * @param {object} werkerPos - werker's current position
+ * @param {number} werkerPos.latitude
+ * @param {number} werkerPos.longitude
+ * @param {object[]} shifts - array of models from DB
+ * @return {object[]} - filtered array of Shift models
+ */
+const filterByDistance = (distance, werkerPos, shifts) => {
+  const meters = distance * 1609.344;
+  return shifts.filter((shift) => {
+    const shiftPos = {
+      latitude: shift.lat,
+      longitude: shift.long,
+    };
+    return geolib.getDistance(werkerPos, shiftPos) <= meters;
+  });
+};
 
 // WERKER
 
@@ -53,7 +76,7 @@ const appendCertsRatingsAndPositionsToWerkers = werkers => Promise.all(werkers.m
 const bulkAddCertificationToWerker = (werker, certifications) => Promise.all(certifications
   .map(certification => db.models.Certification.upsert(certification, { returning: true })
     // eslint-disable-next-line no-unused-vars
-    .then(([newCert, updated]) => db.models.WerkerCertification.upsert({
+    .spread(([newCert, updated]) => db.models.WerkerCertification.upsert({
       WerkerId: werker.id,
       CertificationId: newCert.id,
       url_Photo: certification.url_Photo,
@@ -90,20 +113,61 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
  * @param {string} info.positions.position
  */
 const addWerker = info => db.models.Werker.upsert(info, { returning: true })
-  .spread(newWerker => bulkAddCertificationToWerker(newWerker, info.certifications)
-    .then(() => bulkAddPositionToWerker(newWerker, info.positions)));
+  .spread(newWerker => info.certifications
+    ? bulkAddCertificationToWerker(newWerker, info.certifications)
+    : new Promise(resolve => resolve(newWerker))
+      .then(() => info.positions
+        ? bulkAddPositionToWerker(newWerker, info.positions)
+        : new Promise(resolve => resolve(newWerker))));
+
+/**
+ * updates Werker entry in DB
+ *
+ * @param {number} werkerId
+ * @param {object} info - new values
+ * @param {string} [info.name_first]
+ * @param {string} [info.name_last]
+ * @param {string} [info.email]
+ * @param {string} [info.phone]
+ * @param {string} [info.bio]
+ * @param {object[]} [info.certifications]
+ * @param {string} [info.certifications.cert_name]
+ * @param {string} [info.certifications.url_Photo]
+ * @param {object[]} [info.positions]
+ * @param {string} [info.positions.position]
+ * @param {number} [info.lat]
+ * @param {number} [info.long]
+ */
+const updateWerker = (werkerId, info) => db.models.Werker.update(info, {
+  where: {
+    id: werkerId,
+  },
+  returning: true,
+})
+  .spread(updatedWerker => info.certifications
+    ? bulkAddCertificationToWerker(updatedWerker, info.certifications)
+    : new Promise(resolve => resolve(updatedWerker))
+      .then(() => info.positions
+        ? bulkAddPositionToWerker(updatedWerker, info.positions)
+        : new Promise(resolve => resolve(updatedWerker))));
 
 /**
  * Function to search for shifts by various terms
  *
  * @param {object} terms - an object with search terms
  * @param {string} terms.position - required position
- * @param {number} terms.proximity - maximum distance, in miles
+ * @param {number} terms.proximity - maximum distance, in miles (default 3)
  * @param {number} terms.payment_amnt - minimum pay to accept
  * @param {string} terms.payment_type - payment type to restrict results to
+ * @param {number} werkerId - for proximity calculation
  */
-const getShiftsByTerm = async (terms) => {
+const getShiftsByTerm = async (terms, werkerId) => {
   const searchTerms = terms;
+  const werker = await db.models.Werker.findOne({
+    where: {
+      id: werkerId,
+    },
+  });
   if (terms.position) {
     const position = await db.models.Position.findOne({
       where: {
@@ -111,11 +175,9 @@ const getShiftsByTerm = async (terms) => {
       },
     });
     searchTerms.position = position.dataValues.id;
-    console.log(searchTerms);
   }
   const conditions = {
     position: terms.position ? `sp."PositionId" = ${terms.position}` : 'sp."PositionId" IS NOT NULL',
-    // proximity is future magic
     payment_amnt: terms.payment_amnt ? `sp.payment_amnt >= ${terms.payment_amnt}` : 'sp.payment_amnt IS NOT NULL',
     payment_type: terms.payment_type ? `s.payment_type = ${terms.payment_type}` : 's.payment_type IS NOT NULL',
   };
@@ -126,7 +188,10 @@ const getShiftsByTerm = async (terms) => {
   INNER JOIN "Positions" p
   ON p.id=sp."PositionId"
   WHERE ${conditions.position} AND ${conditions.payment_amnt} AND ${conditions.payment_type} AND sp.filled=false`)
-    .spread(shifts => shifts);
+    .spread(shifts => filterByDistance((terms.proximity || 3), {
+      latitude: werker.lat,
+      longitude: werker.long,
+    }, shifts));
 };
 
 /**
@@ -242,6 +307,7 @@ const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
       ShiftId: shift.id,
       PositionId: newPosition.id,
       payment_amnt: position.payment_amnt,
+      payment_type: position.payment_type,
     }, {
       returning: true,
     }))));
@@ -259,22 +325,22 @@ const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
 const createShift = ({
   MakerId,
   name,
-  time_date,
-  duration,
+  start,
+  end,
   lat,
   long,
+  address,
   description,
   positions,
-  payment_type,
 }) => db.models.Shift.create({
   MakerId,
   name,
-  time_date,
-  duration,
+  start,
+  end,
   lat,
   long,
+  address,
   description,
-  payment_type,
 })
   .then(newShift => bulkAddNewPositionsToShift(newShift, positions));
 
@@ -352,9 +418,9 @@ const getShiftsById = shiftId => db.models.Shift.findOne({
  * @returns {Promise<any[]>} - array of ten sequelize model instances
  */
 const getAllShifts = (offset = 0) => db.models.Shift.findAll({
-  limit: 10,
-  offset: offset * 10,
-  order: [['time_date', 'DESC']],
+  // limit: 10,
+  // offset: offset * 10,
+  order: [['start', 'DESC']],
   include: [
     {
       model: db.models.Maker,
@@ -553,6 +619,7 @@ module.exports = {
   addWerker,
   bulkAddCertificationToWerker,
   bulkAddPositionToWerker,
+  updateWerker,
   getWerkersForShift,
   getWerkersByPosition,
   getShiftsForWerker,
