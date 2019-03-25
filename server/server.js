@@ -88,6 +88,7 @@ const appendAddressToShift = (shift, sequelizeInstance) => {
       if (!sequelizeInstance) {
         return Object.assign(shift, { address: 'We\re having some trouble with that. Please check again later!' });
       }
+      // eslint-disable-next-line no-param-reassign
       shift.dataValues.address = 'We\re having some trouble with that. Please check again later!';
       return shift;
     });
