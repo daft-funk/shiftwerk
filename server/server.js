@@ -106,7 +106,19 @@ app.put('/text', (req, res) => {
 
 // get profile for werker
 app.get('/werkers/:werkerId', (req, res) => {
-  dbHelpers.getWerkerProfile(req.params.werkerId)
+  return dbHelpers.getWerkerProfile(req.params.werkerId)
+    .then((profile) => {
+      console.log(profile);
+      if (profile.dataValues.lat) {
+        return reverseGeocode(profile.dataValues.lat, profile.dataValues.long)
+          .then(address => Object.assign(profile, {
+            dataValues: Object.assign(profile.dataValues, {
+              address,
+            }),
+          }));
+      }
+      return new Promise(resolve => resolve(profile));
+    })
     .then(profile => res.json(200, profile))
     .catch((err) => {
       console.error(err);
