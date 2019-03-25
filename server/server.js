@@ -155,6 +155,17 @@ app.put('/werkers', (req, res) => {
 app.patch('/werkers/:werkerId', (req, res) => {
   const { werkerId } = req.params;
   const settings = req.body;
+  if (settings.address) {
+    return geocode(settings.address)
+      .then(({ lat, lon }) => {
+        settings.lat = lat;
+        settings.long = lon;
+        return reverseGeocode(lat, lon);
+      })
+      .then(address => dbHelpers.updateWerker(werkerId, Object.assign(settings, { address })))
+      .then(updatedWerker => res.status(204).send())
+      .catch(err => errorHandler(err, res));
+  }
   return dbHelpers.updateWerker(werkerId, settings)
     .then(updatedWerker => res.status(204).send())
     .catch(err => errorHandler(err, res));
