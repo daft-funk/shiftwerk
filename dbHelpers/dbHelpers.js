@@ -137,6 +137,7 @@ const addWerker = info => db.models.Werker.upsert(info, { returning: true })
  * @param {string} [info.positions.position]
  * @param {number} [info.lat]
  * @param {number} [info.long]
+ * @param {string} [info.address]
  */
 const updateWerker = (werkerId, info) => db.models.Werker.update(info, {
   where: {
