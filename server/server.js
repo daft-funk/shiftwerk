@@ -233,7 +233,7 @@ app.get('/makers/:makerId', (req, res) => {
 // WERKER-FACING //
 
 // get list of shifts by terms
-app.get('/shifts', async (req, res) => {
+app.get('/werkers/:werkerId/shifts', async (req, res) => {
   const shifts = await dbHelpers.getShiftsByTerm(req.query).catch(err => errorHandler(err, res));
   const shiftsWithAddress = await Promise.all(shifts
     .map(shift => appendAddressToShift(shift, false))).catch(err => errorHandler(err, res));
