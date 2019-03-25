@@ -269,13 +269,13 @@ const getWerkerProfile = id => db.models.Werker.findOne({
 
 // WERKER/MAKER //
 
-const addFavorite = (makerId, werkerId, type) => db.models.Favorite.upsert({
-  MakerId: makerId,
-  WerkerId: werkerId,
-  type,
-}, {
-  returning: true,
-});
+const addFavorite = (makerId, werkerId, type) => db.models.Favorite.findOrCreate({
+  where: {
+    MakerId: makerId,
+    WerkerId: werkerId,
+    type,
+  },
+}).spread(favorite => favorite);
 
 const deleteFavorite = (makerId, werkerId, type) => db.models.Favorite.destroy({
   where: {
@@ -362,7 +362,7 @@ SELECT sp.id FROM "ShiftPositions" sp INNER JOIN "Positions" p ON p.id=sp."Posit
 INSERT INTO "InviteApplies" ("WerkerId",
 "ShiftPositionId", 
 "createdAt", 
-"updatedAt", 
+"updatedAt",
 "type") VALUES (${werkerId}, ${shiftPositions[0].id}, 'now', 'now', '${inviteOrApply}')`);
   });
 
