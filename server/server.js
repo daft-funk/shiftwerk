@@ -156,6 +156,16 @@ app.put('/werkers', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
+/**
+ * PATCH /werkers/:werkerId
+ * expects any number of changed values according to {@link dbHelpers#updateWerker}
+ */
+app.patch('/werkers/:werkerId', (req, res) => {
+  const { werkerId } = req.params;
+  const settings = req.body;
+  return dbHelpers.updateWerker(werkerId, settings);
+});
+
 app.put('/werkers/login', (req, res) => {
   const newJWT = req.body;
   return getProfile(newJWT)
