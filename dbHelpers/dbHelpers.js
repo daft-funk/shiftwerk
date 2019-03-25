@@ -1,7 +1,29 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable camelcase */
 // const sequelize = require('sequelize');
+const geolib = require('geolib');
 const db = require('../db/index');
+
+/**
+ * Filters any number of shifts by distance from werker
+ *
+ * @param {number} distance - maximum distance in miles
+ * @param {object} werkerPos - werker's current position
+ * @param {number} werkerPos.latitude
+ * @param {number} werkerPos.longitude
+ * @param {object[]} shifts - array of models from DB
+ * @return {object[]} - filtered array of Shift models
+ */
+const filterByDistance = (distance, werkerPos, shifts) => {
+  const meters = distance * 1609.344;
+  return shifts.filter((shift) => {
+    const shiftPos = {
+      latitude: shift.lat,
+      longitude: shift.long,
+    };
+    return geolib.getDistance(werkerPos, shiftPos) <= meters;
+  });
+};
 
 // WERKER
 
