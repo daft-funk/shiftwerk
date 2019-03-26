@@ -20,7 +20,7 @@ app.use(cors());
 
 const errorHandler = (err, res) => {
   console.error(err);
-  res.send(500, 'Something went wrong!');
+  return res.send(500, 'Something went wrong!');
 };
 
 app.use(verifyToken);
@@ -37,12 +37,9 @@ app.put('/werkers', (req, res, next) => {
  * sends back new db record
  */
 
-app.put('/werkers', (req, res) => {
-  console.log(req.user);
-  return dbHelpers.addWerker(req.user)
-    .then(werker => res.json(201, werker))
-    .catch(err => errorHandler(err, res));
-});
+app.put('/werkers', (req, res) => dbHelpers.addWerker(req.user)
+  .then(werker => res.json(201, werker))
+  .catch(err => errorHandler(err, res)));
 
 app.put('/makers', (req, res, next) => {
   req.user.type = 'maker';

@@ -13,6 +13,8 @@ const verifyToken = (req, res, next) => {
   if (!req.user) {
     req.user = {};
   }
+  req.user.type = req.headers['user-type'];
+  console.log(req.user.type);
   oauth2Client.setCredentials({
     access_token,
     refresh_token: '',
@@ -24,7 +26,7 @@ const verifyToken = (req, res, next) => {
   })
     .then(ticket => ticket.getPayload())
     .then((payload) => {
-      req.user.googleId = payload.sub;
+      req.user.google_id = payload.sub;
       next();
     })
     .catch((err) => {
@@ -34,11 +36,11 @@ const verifyToken = (req, res, next) => {
 };
 
 const checkLogin = (req, res, next) => {
-  const { googleId } = req.user;
-  const model = req.user.type === 'werker' ? db.models.Werker : db.models.Maker;
+  const { google_id } = req.user;
+  const model = req.user.type === 'Werker' ? db.models.Werker : db.models.Maker;
   return model.findOne({
     where: {
-      google_id: googleId,
+      google_id,
     },
   })
     .then((foundUser) => {
