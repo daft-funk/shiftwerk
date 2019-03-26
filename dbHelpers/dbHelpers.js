@@ -315,7 +315,7 @@ const bulkAddNewPositionsToShift = (shift, positions) => Promise.all(positions
 /**
  * Function used to create a new shift
  * @param {string} name - the name of the shift
- * @param {date} start - the time and date of the shift
+ * @param {date} start - the start date of the shift
  * @param {number} duration - the duration of the shift in minutes
  * @param {number} lat - the latitude of the shift
  * @param {number} long - the longitude of the shift
@@ -413,7 +413,7 @@ const getShiftsById = shiftId => db.models.Shift.findOne({
 });
 
 /**
- * gets ten shifts from the DB, sorted by time_date
+ * gets ten shifts from the DB, sorted by start
  * and offset by a given amount
  *
  * @param {Number} offset - number of pages (by ten) to offset entries by
