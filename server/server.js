@@ -8,61 +8,15 @@ const cors = require('cors');
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
 const { oauth2Client, checkLogin } = require('../auth/auth');
 
-// const people = google.people({
-//   version: 'v1',
-//   auth: oauth2Client,
-// });
-// const calendar = google.calendar({
-//   version: 'v3',
-//   auth: oauth2Client,
-// });
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
+const { getGoogleProfile } = require('../apiHelpers/google');
 
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
-
-// const getProfile = (idToken) => {
-//   oauth2Client.setCredentials({
-//     access_token: idToken.access_token,
-//     refresh_token: '',
-//   });
-//   return people.people.get({
-//     resourceName: 'people/me',
-//     personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
-//   })
-//     .then(res => res.data)
-//     .catch(err => err);
-// };
-
-// const addToCalendar = async (token) => {
-//   oauth2Client.setCredentials({
-//     access_token: token.access_token,
-//   });
-//   const res = await calendar.events.insert({
-//     calendarId: 'aeginidae@gmail.com',
-//     resource: {
-//       summary: 'hello world',
-//       location: '6363 St Charles Ave, New Orleans, LA 70115',
-//       description: 'hello',
-//       start: {
-//         dateTime: '2019-03-25T09:00:00-07:00',
-//         timeZone: 'America/Chicago',
-//       },
-//       end: {
-//         dateTime: '2019-03-25T10:00:00-07:00',
-//         timeZone: 'America/Chicago',
-//       },
-//       attendees: [
-//         { email: 'aeginidae@gmail.com' },
-//       ],
-//     },
-//   });
-//   console.log(res.data);
-// };
 
 const errorHandler = (err, res) => {
   console.error(err);
@@ -112,6 +66,11 @@ app.get('/werkers/search/:positionName', (req, res) => {
     });
 });
 
+app.put('/werkers', (req, res, next) => {
+  req.user.type = 'werker';
+  return getGoogleProfile(req, res, next);
+});
+
 /**
  * PUT /werkers
  * expects JWT as body
@@ -120,25 +79,8 @@ app.get('/werkers/search/:positionName', (req, res) => {
  */
 
 app.put('/werkers', (req, res) => {
-  console.log(req.body);
-  const newJWT = req.body;
-  // oauth2Client.credentials = newJWT;
-  return getProfile(newJWT)
-    .then((profile) => {
-      console.log(profile);
-      const newWerker = {
-        name_first: profile.names ? profile.names[0].givenName : '',
-        name_last: profile.names ? profile.names[0].familyName : '',
-        email: profile.emailAddresses ? profile.emailAddresses[0].value : '',
-        url_photo: profile.photos ? profile.photos[0].url : '',
-        phone: profile.phoneNumbers ? profile.phoneNumbers[0].value : '', // this is a guess!
-        bio: '',
-        certifications: [],
-        positions: [],
-      };
-      console.log(newWerker);
-      return dbHelpers.addWerker(newWerker);
-    })
+  console.log(req.user);
+  return dbHelpers.addWerker(req.user)
     .then(werker => res.json(201, werker))
     .catch(err => errorHandler(err, res));
 });
@@ -183,6 +125,11 @@ app.put('/werkers/login', (req, res) => {
 
 // ----MAKER---- //
 
+app.put('/makers', (req, res, next) => {
+  req.user.type = 'maker';
+  return getGoogleProfile(req, res, next);
+});
+
 /**
  * PUT /makers
  * expects body with the following properties:
@@ -195,21 +142,8 @@ app.put('/werkers/login', (req, res) => {
  */
 
 app.put('/makers', (req, res) => {
-  console.log(req.body);
-  const newJWT = req.body;
-  // oauth2Client.credentials = newJWT;
-  return getProfile(newJWT)
-    .then((profile) => {
-      console.log(profile);
-      const newMaker = {
-        name: profile.names ? profile.names[0].displayName : '',
-        email: profile.emailAddresses ? profile.emailAddresses[0].value : '',
-        url_photo: profile.photos ? profile.photos[0].url : '',
-        phone: profile.phoneNumbers ? profile.phoneNumbers[0].value : '', // this is a guess!
-      };
-      console.log(newMaker);
-      return models.Maker.upsert(newMaker, { returning: true });
-    })
+  console.log(req.user);
+  return models.Maker.create(req.user)
     .then(maker => res.json(201, maker))
     .catch(err => errorHandler(err, res));
 });
