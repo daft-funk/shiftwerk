@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
-const { verifyToken, checkLogin } = require('../auth/auth');
+const { verifyToken, checkLogin, checkUser } = require('../auth/auth');
 
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
@@ -112,61 +112,6 @@ app.get('/werkers/search/:positionName', (req, res) => {
     });
 });
 
-/**
- * PATCH /werkers/:werkerId
- * expects any number of changed values according to {@link dbHelpers#updateWerker}
- */
-app.patch('/werkers/:werkerId', (req, res) => {
-  const { werkerId } = req.params;
-  const settings = req.body;
-  if (settings.address) {
-    return geocode(settings.address)
-      .then(({ lat, lon }) => {
-        settings.lat = lat;
-        settings.long = lon;
-        return reverseGeocode(lat, lon);
-      })
-      .then(address => dbHelpers.updateWerker(werkerId, Object.assign(settings, { address })))
-      .then(updatedWerker => res.status(204).send())
-      .catch(err => errorHandler(err, res));
-  }
-  return dbHelpers.updateWerker(werkerId, settings)
-    .then(updatedWerker => res.status(204).send())
-    .catch(err => errorHandler(err, res));
-});
-
-app.put('/werkers/login', (req, res) => {
-  const newJWT = req.body;
-  return getProfile(newJWT)
-    .then((profile) => {
-      console.log(profile);
-      return models.Werker.findOne({
-        where: {
-          email: profile.emailAddresses[0].value,
-        },
-      });
-    })
-    .then(werker => res.status(201).json(werker))
-    .catch(err => errorHandler(err, res));
-});
-
-// ----MAKER---- //
-
-app.put('/makers/login', (req, res) => {
-  const newJWT = req.body;
-  return getProfile(newJWT)
-    .then((profile) => {
-      console.log(profile);
-      return models.Maker.findOne({
-        where: {
-          email: profile.emailAddresses[0].value,
-        },
-      });
-    })
-    .then(maker => res.json(201, Object.assign(maker, { type: 'maker' })))
-    .catch(err => res.json(201, 'bad credentials'));
-});
-
 // get a maker's profile
 app.get('/makers/:makerId', (req, res) => {
   models.Maker.findOne({ where: { id: req.params.makerId } })
@@ -177,44 +122,11 @@ app.get('/makers/:makerId', (req, res) => {
     });
 });
 
-// ----SHIFT---- //
-
-// WERKER-FACING //
-
 // get list of shifts by terms
 app.get('/werkers/:werkerId/shifts', async (req, res) => {
   const shifts = await dbHelpers.getShiftsByTerm(req.query).catch(err => errorHandler(err, res));
   return res.status(200).json(shifts);
 });
-
-// gets all shifts a werker is eligible for based on positions
-app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
-  const { werkerId } = req.params;
-  const shifts = await dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// histOrUpcoming is either 'history' or 'upcoming'
-app.get('/werkers/:werkerId/shifts/:histOrUpcoming', async (req, res) => {
-  const { werkerId, histOrUpcoming } = req.params;
-  const shifts = await dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
-    .catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// get all shifts werker is invited to
-app.get('/werkers/:werkerId/invitations', async (req, res) => {
-  const { werkerId } = req.params;
-  const shifts = await dbHelpers.getInvitedShifts(werkerId).catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// MAKER-FACING //
-
-// app.get('/allshifts', (req, res) => {
-//   dbHelpers.getAllShifts()
-//     .then(shifts => res.status(200).json(shifts));
-// });
 
 /**
  * PUT /shifts
@@ -260,6 +172,104 @@ app.delete('/shifts/:shiftId', (req, res) => {
       res.status(500).send('unable to delete');
     });
 });
+
+// get detailed shift info by Id for maker and werker
+app.get('/shifts/:shiftId', async (req, res) => {
+  const { shiftId } = req.params;
+  // TODO check helper function name
+  const shift = await dbHelpers.getShiftsById(shiftId).catch(err => errorHandler(err, res));
+  return res.status(200).json(shift);
+});
+
+app.use(checkUser);
+
+/**
+ * PATCH /werkers/:werkerId
+ * expects any number of changed values according to {@link dbHelpers#updateWerker}
+ */
+app.patch('/werkers/:werkerId', (req, res) => {
+  const { werkerId } = req.params;
+  const settings = req.body;
+  if (settings.address) {
+    return geocode(settings.address)
+      .then(({ lat, lon }) => {
+        settings.lat = lat;
+        settings.long = lon;
+        return reverseGeocode(lat, lon);
+      })
+      .then(address => dbHelpers.updateWerker(werkerId, Object.assign(settings, { address })))
+      .then(updatedWerker => res.status(204).send())
+      .catch(err => errorHandler(err, res));
+  }
+  return dbHelpers.updateWerker(werkerId, settings)
+    .then(updatedWerker => res.status(204).send())
+    .catch(err => errorHandler(err, res));
+});
+
+// app.put('/werkers/login', (req, res) => {
+//   const newJWT = req.body;
+//   return getProfile(newJWT)
+//     .then((profile) => {
+//       console.log(profile);
+//       return models.Werker.findOne({
+//         where: {
+//           email: profile.emailAddresses[0].value,
+//         },
+//       });
+//     })
+//     .then(werker => res.status(201).json(werker))
+//     .catch(err => errorHandler(err, res));
+// });
+
+// ----MAKER---- //
+
+// app.put('/makers/login', (req, res) => {
+//   const newJWT = req.body;
+//   return getProfile(newJWT)
+//     .then((profile) => {
+//       console.log(profile);
+//       return models.Maker.findOne({
+//         where: {
+//           email: profile.emailAddresses[0].value,
+//         },
+//       });
+//     })
+//     .then(maker => res.json(201, Object.assign(maker, { type: 'maker' })))
+//     .catch(err => res.json(201, 'bad credentials'));
+// });
+
+// ----SHIFT---- //
+
+// WERKER-FACING //
+
+// gets all shifts a werker is eligible for based on positions
+app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
+  const { werkerId } = req.params;
+  const shifts = await dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
+  return res.status(200).json(shifts);
+});
+
+// histOrUpcoming is either 'history' or 'upcoming'
+app.get('/werkers/:werkerId/shifts/:histOrUpcoming', async (req, res) => {
+  const { werkerId, histOrUpcoming } = req.params;
+  const shifts = await dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
+    .catch(err => errorHandler(err, res));
+  return res.status(200).json(shifts);
+});
+
+// get all shifts werker is invited to
+app.get('/werkers/:werkerId/invitations', async (req, res) => {
+  const { werkerId } = req.params;
+  const shifts = await dbHelpers.getInvitedShifts(werkerId).catch(err => errorHandler(err, res));
+  return res.status(200).json(shifts);
+});
+
+// MAKER-FACING //
+
+// app.get('/allshifts', (req, res) => {
+//   dbHelpers.getAllShifts()
+//     .then(shifts => res.status(200).json(shifts));
+// });
 
 // get all applications to a maker's shifts
 app.get('/makers/:makerId/applications', async (req, res) => {
@@ -310,14 +320,6 @@ app.delete('/favorites', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
-// get detailed shift info by Id for maker and werker
-app.get('/shifts/:shiftId', async (req, res) => {
-  const { shiftId } = req.params;
-  // TODO check helper function name
-  const shift = await dbHelpers.getShiftsById(shiftId).catch(err => errorHandler(err, res));
-  return res.status(200).json(shift);
-});
-
 // apply or invite for shift
 // applyOrInvite must be string "apply" or "invite"
 app.put('/shifts/:shiftId/:applyOrInvite/:werkerId/:positionName', (req, res) => {
@@ -359,10 +361,6 @@ app.put('/shifts/:shiftId/:werkerId/rating/:type/:rating', async (req, res) => {
   } = req.params;
   const newRating = await dbHelpers.rateShift(shiftId, werkerId, rating, type).catch(err => errorHandler(err, res));
   return res.send(201, newRating);
-});
-
-app.put('/auth', (req, res) => {
-  const { tokens } = google;
 });
 
 const port = process.env.PORT || 4000;
