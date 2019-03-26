@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
-const { oauth2Client, checkLogin } = require('../auth/auth');
+const { verifyToken, checkLogin } = require('../auth/auth');
 
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
@@ -22,6 +22,52 @@ const errorHandler = (err, res) => {
   console.error(err);
   res.send(500, 'Something went wrong!');
 };
+
+app.use(verifyToken);
+
+app.put('/werkers', (req, res, next) => {
+  req.user.type = 'werker';
+  return getGoogleProfile(req, res, next);
+});
+
+/**
+ * PUT /werkers
+ * expects JWT as body
+ * creates new resource in db
+ * sends back new db record
+ */
+
+app.put('/werkers', (req, res) => {
+  console.log(req.user);
+  return dbHelpers.addWerker(req.user)
+    .then(werker => res.json(201, werker))
+    .catch(err => errorHandler(err, res));
+});
+
+app.put('/makers', (req, res, next) => {
+  req.user.type = 'maker';
+  return getGoogleProfile(req, res, next);
+});
+
+/**
+ * PUT /makers
+ * expects body with the following properties:
+ *  name
+ *  url_photo
+ *  email
+ *  phone
+ * creates new resource in db
+ * sends back new db record
+ */
+
+app.put('/makers', (req, res) => {
+  console.log(req.user);
+  return models.Maker.create(req.user)
+    .then(maker => res.json(201, maker))
+    .catch(err => errorHandler(err, res));
+});
+
+app.use(checkLogin);
 
 app.put('/text', (req, res) => {
   const { body, to } = req.body;
@@ -66,25 +112,6 @@ app.get('/werkers/search/:positionName', (req, res) => {
     });
 });
 
-app.put('/werkers', (req, res, next) => {
-  req.user.type = 'werker';
-  return getGoogleProfile(req, res, next);
-});
-
-/**
- * PUT /werkers
- * expects JWT as body
- * creates new resource in db
- * sends back new db record
- */
-
-app.put('/werkers', (req, res) => {
-  console.log(req.user);
-  return dbHelpers.addWerker(req.user)
-    .then(werker => res.json(201, werker))
-    .catch(err => errorHandler(err, res));
-});
-
 /**
  * PATCH /werkers/:werkerId
  * expects any number of changed values according to {@link dbHelpers#updateWerker}
@@ -124,29 +151,6 @@ app.put('/werkers/login', (req, res) => {
 });
 
 // ----MAKER---- //
-
-app.put('/makers', (req, res, next) => {
-  req.user.type = 'maker';
-  return getGoogleProfile(req, res, next);
-});
-
-/**
- * PUT /makers
- * expects body with the following properties:
- *  name
- *  url_photo
- *  email
- *  phone
- * creates new resource in db
- * sends back new db record
- */
-
-app.put('/makers', (req, res) => {
-  console.log(req.user);
-  return models.Maker.create(req.user)
-    .then(maker => res.json(201, maker))
-    .catch(err => errorHandler(err, res));
-});
 
 app.put('/makers/login', (req, res) => {
   const newJWT = req.body;
