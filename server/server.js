@@ -4,23 +4,18 @@ require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const jwt = require('jsonwebtoken');
-const { google } = require('googleapis');
 
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
+const { oauth2Client, checkLogin } = require('../auth/auth');
 
-const oauth2Client = new google.auth.OAuth2(
-  process.env.GOOGLE_CLIENT_ID,
-  process.env.GOOGLE_CLIENT_SECRET,
-);
-const people = google.people({
-  version: 'v1',
-  auth: oauth2Client,
-});
-const calendar = google.calendar({
-  version: 'v3',
-  auth: oauth2Client,
-});
+// const people = google.people({
+//   version: 'v1',
+//   auth: oauth2Client,
+// });
+// const calendar = google.calendar({
+//   version: 'v3',
+//   auth: oauth2Client,
+// });
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
@@ -30,44 +25,44 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
-const getProfile = (idToken) => {
-  oauth2Client.setCredentials({
-    access_token: idToken.access_token,
-    refresh_token: '',
-  });
-  return people.people.get({
-    resourceName: 'people/me',
-    personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
-  })
-    .then(res => res.data)
-    .catch(err => err);
-};
+// const getProfile = (idToken) => {
+//   oauth2Client.setCredentials({
+//     access_token: idToken.access_token,
+//     refresh_token: '',
+//   });
+//   return people.people.get({
+//     resourceName: 'people/me',
+//     personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
+//   })
+//     .then(res => res.data)
+//     .catch(err => err);
+// };
 
-const addToCalendar = async (token) => {
-  oauth2Client.setCredentials({
-    access_token: token.access_token,
-  });
-  const res = await calendar.events.insert({
-    calendarId: 'aeginidae@gmail.com',
-    resource: {
-      summary: 'hello world',
-      location: '6363 St Charles Ave, New Orleans, LA 70115',
-      description: 'hello',
-      start: {
-        dateTime: '2019-03-25T09:00:00-07:00',
-        timeZone: 'America/Chicago',
-      },
-      end: {
-        dateTime: '2019-03-25T10:00:00-07:00',
-        timeZone: 'America/Chicago',
-      },
-      attendees: [
-        { email: 'aeginidae@gmail.com' },
-      ],
-    },
-  });
-  console.log(res.data);
-};
+// const addToCalendar = async (token) => {
+//   oauth2Client.setCredentials({
+//     access_token: token.access_token,
+//   });
+//   const res = await calendar.events.insert({
+//     calendarId: 'aeginidae@gmail.com',
+//     resource: {
+//       summary: 'hello world',
+//       location: '6363 St Charles Ave, New Orleans, LA 70115',
+//       description: 'hello',
+//       start: {
+//         dateTime: '2019-03-25T09:00:00-07:00',
+//         timeZone: 'America/Chicago',
+//       },
+//       end: {
+//         dateTime: '2019-03-25T10:00:00-07:00',
+//         timeZone: 'America/Chicago',
+//       },
+//       attendees: [
+//         { email: 'aeginidae@gmail.com' },
+//       ],
+//     },
+//   });
+//   console.log(res.data);
+// };
 
 const errorHandler = (err, res) => {
   console.error(err);
