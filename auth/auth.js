@@ -48,8 +48,18 @@ const checkLogin = (req, res, next) => {
     });
 };
 
+const checkUser = (req, res, next) => {
+  const { id } = req.user;
+  const attemptedId = req.user.type === 'werker' ? req.params.werkerId : req.params.MakerId;
+  if (id === attemptedId) {
+    return next();
+  }
+  return res.status(403).send('Attempt to access unauthorized resources');
+};
+
 module.exports = {
   oauth2Client,
   verifyToken,
   checkLogin,
+  checkUser,
 };
