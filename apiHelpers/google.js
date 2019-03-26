@@ -15,8 +15,9 @@ const getGoogleProfile = (req, res, next) => {
   //   access_token: req.id,
   //   refresh_token: '',
   // });
+  console.log(req.user.googleId);
   return people.people.get({
-    resourceName: `people/${req.user.id}`,
+    resourceName: `people/${req.user.googleId}`,
     personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
   })
     .then((googleRes) => {
