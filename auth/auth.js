@@ -8,10 +8,16 @@ const oauth2Client = new google.auth.OAuth2(
 );
 
 const verifyToken = (req, res, next) => {
-  const { id_token } = req.query;
+  const access_token = req.headers.authorization;
+  const id_token = req.headers['id-token'];
   if (!req.user) {
     req.user = {};
   }
+  oauth2Client.setCredentials({
+    access_token,
+    refresh_token: '',
+  });
+  console.log(access_token, id_token);
   return oauth2Client.verifyIdToken({
     idToken: id_token,
     audience: process.env.GOOGLE_CLIENT_ID,
