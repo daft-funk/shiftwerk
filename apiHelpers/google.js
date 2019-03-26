@@ -15,14 +15,14 @@ const getGoogleProfile = (req, res, next) => {
   //   access_token: req.id,
   //   refresh_token: '',
   // });
-  console.log(req.user.googleId);
+  console.log(req.user.google_id);
   return people.people.get({
-    resourceName: `people/${req.user.googleId}`,
+    resourceName: `people/${req.user.google_id}`,
     personFields: 'emailAddresses,names,photos,urls,phoneNumbers',
   })
     .then((googleRes) => {
       console.log(googleRes);
-      if (req.user.type === 'maker') {
+      if (req.user.type === 'Maker') {
         req.user = Object.assign(req.user, {
           name: googleRes.data.names ? googleRes.data.names[0].displayName : '',
           email: googleRes.data.emailAddresses ? googleRes.data.emailAddresses[0].value : '',
