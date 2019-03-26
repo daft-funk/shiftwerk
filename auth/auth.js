@@ -14,7 +14,7 @@ const checkLogin = (req, res, next) => {
   })
     .then(ticket => ticket.getPayload())
     .then((payload) => {
-      req.id = payload.sub;
+      req.user.id = payload.sub;
       next();
     })
     .catch((err) => {
