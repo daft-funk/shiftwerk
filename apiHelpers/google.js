@@ -22,7 +22,7 @@ const getGoogleProfile = (req, res, next) => {
   })
     .then((googleRes) => {
       console.log(googleRes);
-      if (req.user.type === 'Maker') {
+      if (req.user.type === 'maker') {
         req.user = Object.assign(req.user, {
           name: googleRes.data.names ? googleRes.data.names[0].displayName : '',
           email: googleRes.data.emailAddresses ? googleRes.data.emailAddresses[0].value : '',

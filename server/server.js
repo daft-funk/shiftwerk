@@ -59,8 +59,10 @@ app.put('/makers', (req, res, next) => {
 
 app.put('/makers', (req, res) => {
   console.log(req.user);
-  return models.Maker.create(req.user)
-    .then(maker => res.json(201, maker))
+  return models.Maker.upsert(req.user, {
+    returning: true,
+  })
+    .spread(maker => res.json(201, maker))
     .catch(err => errorHandler(err, res));
 });
 
