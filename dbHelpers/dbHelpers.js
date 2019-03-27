@@ -650,6 +650,15 @@ const getFulfilledShifts = (id, histOrUpcoming) => {
     .spread(shifts => appendMakerRatingPositionToShifts(shifts));
 };
 
+const getMakerByShiftId = id => db.models.Maker.findOne({
+  include: [{
+    model: db.models.Shift,
+    where: {
+      id,
+    },
+  }],
+});
+
 const rateShift = (shiftId, werkerId, rating, type) => db.sequelize.query(`
 INSERT INTO "Ratings" ("ShiftId", "WerkerId", rating, type, "createdAt", "updatedAt") VALUES (${shiftId}, ${werkerId}, ${rating}, '${type}', 'now', 'now')`);
 
@@ -677,6 +686,7 @@ module.exports = {
   getApplicationsForShifts,
   getUnfulfilledShifts,
   getFulfilledShifts,
+  getMakerByShiftId,
   rateShift,
   addFavorite,
   deleteFavorite,
