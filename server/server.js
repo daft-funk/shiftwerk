@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
-const { loginFlow } = require('../auth/auth');
+const { loginFlow, checkLogin } = require('../auth/auth');
 
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
@@ -35,6 +35,8 @@ app.get('/shifts', (req, res) => {
   dbHelpers.getAllShifts()
     .then(shifts => res.status(200).json(shifts));
 });
+
+app.use(checkLogin);
 
 const errorHandler = (err, res) => {
   console.error(err);
