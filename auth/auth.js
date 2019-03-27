@@ -59,16 +59,42 @@ const checkLogin = (req, res, next) => {
       id,
     },
   }).then((user) => {
-    req.accessToken = user.access_token;
-    req.refreshToken = user.refresh_token;
+    req.user = {
+      accessToken: user.access_token,
+      refreshToken: user.refresh_token,
+      id,
+      type,
+    };
     return next();
   }).catch((err) => {
     console.error(err);
-    res.status(401).send('Something was wrong about your authentication...');
+    res.status(401).send('Something was wrong about your authentication. Maybe your token is expired?');
   });
+};
+
+const checkUser = (req, res, next) => {
+  let attemptedResource;
+  const firstChar = req.url[1];
+  if (firstChar === 'w') attemptedResource = 'werkers';
+  else if (firstChar === 'm') attemptedResource = 'makers';
+  else if (firstChar === 'f') attemptedResource = 'favorites';
+  else attemptedResource = 'shifts';
+  if (attemptedResource === 'werkers' && req.params.werkerId === req.user.id) {
+    return next();
+  } if (attemptedResource === 'makers' && req.params.makerId === req.user.id) {
+    return next();
+  } if (attemptedResource === 'favorites') {
+    const type = req.query ? req.query.type : req.body.type;
+    const id = Number(req.query ? req.query.id : req.body[`${type}Id`]);
+    if (id === req.user.id && type === req.user.type) {
+      return next();
+    }
+  }
+  return res.status(401).send('Attempt to access unauthorized resource.');
 };
 
 module.exports = {
   loginFlow,
   checkLogin,
+  checkUser,
 };
