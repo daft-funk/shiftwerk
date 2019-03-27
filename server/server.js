@@ -18,6 +18,11 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+app.get('/shifts', (req, res) => {
+  dbHelpers.getAllShifts()
+    .then(shifts => res.status(200).json(shifts));
+});
+
 const errorHandler = (err, res) => {
   console.error(err);
   return res.send(500, 'Something went wrong!');
@@ -264,11 +269,6 @@ app.get('/werkers/:werkerId/invitations', async (req, res) => {
 });
 
 // MAKER-FACING //
-
-app.get('/shifts', (req, res) => {
-  dbHelpers.getAllShifts()
-    .then(shifts => res.status(200).json(shifts));
-});
 
 // get all applications to a maker's shifts
 app.get('/makers/:makerId/applications', async (req, res) => {
