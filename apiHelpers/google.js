@@ -12,6 +12,13 @@ const calendar = google.calendar({
   auth: oauth2Client,
 });
 
+/**
+ * given a payload from a google JWT, gets google profile
+ *
+ * @param {object} user
+ * @param {string} type
+ * @param {any} client - instance of google.auth.OAuth2
+ */
 const getGoogleProfile = (user, type, client) => {
   const people = google.people({
     version: 'v1',
@@ -25,6 +32,8 @@ const getGoogleProfile = (user, type, client) => {
       console.log(googleRes);
       if (type === 'maker') {
         return {
+          access_token: client.credentials.access_token,
+          refresh_token: client.credentials.refresh_token,
           name: googleRes.data.names ? googleRes.data.names[0].displayName : '',
           email: googleRes.data.emailAddresses ? googleRes.data.emailAddresses[0].value : '',
           url_photo: googleRes.data.photos ? googleRes.data.photos[0].url : '',
@@ -32,6 +41,8 @@ const getGoogleProfile = (user, type, client) => {
         };
       }
       return {
+        access_token: client.credentials.access_token,
+        refresh_token: client.credentials.refresh_token,
         name_first: googleRes.data.names ? googleRes.data.names[0].givenName : '',
         name_last: googleRes.data.names ? googleRes.data.names[0].familyName : '',
         email: googleRes.data.emailAddresses ? googleRes.data.emailAddresses[0].value : '',
