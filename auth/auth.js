@@ -2,6 +2,7 @@
 const { google } = require('googleapis');
 const jwt = require('jsonwebtoken');
 const { getGoogleProfile, saveGoogleProfile } = require('../apiHelpers/google');
+const { models } = require('../db');
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -49,6 +50,25 @@ const loginFlow = (code, type) => getToken(code)
   .then(savedUser => generateToken(savedUser, type))
   .catch(err => console.error(err));
 
+const checkLogin = (req, res, next) => {
+  const token = req.headers.authorization.replace('Bearer ', '');
+  const { id, type } = jwt.verify(token, process.env.SUPER_SECRET_KEY);
+  const model = type === 'werker' ? 'Werker' : 'Maker';
+  return models[model].findOne({
+    where: {
+      id,
+    },
+  }).then((user) => {
+    req.accessToken = user.access_token;
+    req.refreshToken = user.refresh_token;
+    return next();
+  }).catch((err) => {
+    console.error(err);
+    res.status(401).send('Something was wrong about your authentication...');
+  });
+};
+
 module.exports = {
   loginFlow,
+  checkLogin,
 };
