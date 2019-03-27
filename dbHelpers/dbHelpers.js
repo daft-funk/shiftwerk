@@ -129,6 +129,15 @@ const addWerker = (info) => {
   return db.models.Werker.findOrCreate({
     where: werkerProps,
   })
+    .catch((err) => {
+      if (err.message === 'Validation error') {
+        return db.models.Werker.upsert(werkerProps,
+          {
+            returning: true,
+          });
+      }
+      return new Error('Something went wrong');
+    })
     .spread(newWerker => info.certifications
       ? bulkAddCertificationToWerker(newWerker, info.certifications)
       : new Promise(resolve => resolve(newWerker))
