@@ -296,6 +296,13 @@ const getWerkerProfile = id => db.models.Werker.findOne({
 
 // WERKER/MAKER //
 
+/**
+ * creates a new "favorites" entry in the DB, either maker->werker or werker->maker
+ *
+ * @param {number} makerId - id from DB
+ * @param {number} werkerId - id from DB
+ * @param {string} type - either 'werker' or 'maker'
+ */
 const addFavorite = (makerId, werkerId, type) => db.models.Favorite.findOrCreate({
   where: {
     MakerId: makerId,
@@ -304,6 +311,13 @@ const addFavorite = (makerId, werkerId, type) => db.models.Favorite.findOrCreate
   },
 }).spread(favorite => favorite);
 
+/**
+ * removes a favorite from DB
+ *
+ * @param {number} makerId - id from DB
+ * @param {number} werkerId - id from DB
+ * @param {string} type - either 'werker' or 'maker'
+ */
 const deleteFavorite = (makerId, werkerId, type) => db.models.Favorite.destroy({
   where: {
     MakerId: makerId,
@@ -312,6 +326,12 @@ const deleteFavorite = (makerId, werkerId, type) => db.models.Favorite.destroy({
   },
 });
 
+/**
+ * retrieves all favorites for a given user
+ *
+ * @param {number} id - either werker or maker ID from DB
+ * @param {string} type - either 'werker' or 'maker'
+ */
 const getFavorites = (id, type) => {
   const propToFind = type[0].toUpperCase().concat(type.slice(1).concat('Id'));
   return db.models.Favorite.findAll({
