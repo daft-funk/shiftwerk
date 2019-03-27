@@ -101,7 +101,8 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
  * adds new werker to DB, including certifications and positions
  *
  * @param {Object} info
- * @param {string} info.google_id
+ * @param {string} info.access_token
+ * @param {string} info.refresh_token
  * @param {string} info.name_first
  * @param {string} info.name_last
  * @param {string} info.email
@@ -117,7 +118,8 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
  */
 const addWerker = (info) => {
   const werkerProps = {
-    google_id: info.google_id,
+    access_token: info.access_token,
+    refresh_token: info.refresh_token,
     name_first: info.name_first,
     name_last: info.name_last,
     email: info.email,
