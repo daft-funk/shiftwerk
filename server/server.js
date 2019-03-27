@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
-const { verifyToken, checkLogin, checkUser } = require('../auth/auth');
+const { loginFlow } = require('../auth/auth');
 
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
@@ -18,6 +18,19 @@ const app = express();
 app.use(bodyParser.json());
 app.use(cors());
 
+app.get('/login', (req, res) => {
+  const { code, type } = req.query;
+  return loginFlow(code, type)
+    .then((token) => {
+      if (token) {
+        console.log(token);
+        return res.status(201).send(token);
+      }
+      throw new Error('Something went wrong validating your credentials!');
+    })
+    .catch(err => res.status(500).send(err));
+});
+
 app.get('/shifts', (req, res) => {
   dbHelpers.getAllShifts()
     .then(shifts => res.status(200).json(shifts));
@@ -28,11 +41,12 @@ const errorHandler = (err, res) => {
   return res.send(500, 'Something went wrong!');
 };
 
-app.use(verifyToken);
+// app.use(verifyToken);
 
 app.put('/werkers', (req, res, next) => {
-  req.user.type = 'werker';
-  return getGoogleProfile(req, res, next);
+  // req.user.type = 'werker';
+  // return getGoogleProfile(req, res, next);
+  res.send('yay');
 });
 
 /**
@@ -42,9 +56,9 @@ app.put('/werkers', (req, res, next) => {
  * sends back new db record
  */
 
-app.put('/werkers', (req, res) => dbHelpers.addWerker(req.user)
-  .then(werker => res.json(201, werker))
-  .catch(err => errorHandler(err, res)));
+// app.put('/werkers', (req, res) => dbHelpers.addWerker(req.user)
+//   .then(werker => res.json(201, werker))
+//   .catch(err => errorHandler(err, res)));
 
 app.put('/makers', (req, res, next) => {
   req.user.type = 'maker';
@@ -71,7 +85,7 @@ app.put('/makers', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
-app.use(checkLogin);
+// app.use(checkLogin);
 
 app.put('/text', (req, res) => {
   const { body, to } = req.body;
@@ -185,7 +199,7 @@ app.get('/shifts/:shiftId', async (req, res) => {
   return res.status(200).json(shift);
 });
 
-app.use(checkUser);
+// app.use(checkUser);
 
 /**
  * PATCH /werkers/:werkerId
