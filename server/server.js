@@ -28,7 +28,7 @@ const errorHandler = (err, res) => {
   return res.send(500, 'Something went wrong!');
 };
 
-app.use(verifyToken);
+// app.use(verifyToken);
 
 app.put('/werkers', (req, res, next) => {
   req.user.type = 'werker';
@@ -71,7 +71,7 @@ app.put('/makers', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
-app.use(checkLogin);
+// app.use(checkLogin);
 
 app.put('/text', (req, res) => {
   const { body, to } = req.body;
@@ -185,7 +185,7 @@ app.get('/shifts/:shiftId', async (req, res) => {
   return res.status(200).json(shift);
 });
 
-app.use(checkUser);
+// app.use(checkUser);
 
 /**
  * PATCH /werkers/:werkerId
