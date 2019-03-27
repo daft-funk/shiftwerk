@@ -45,11 +45,10 @@ const errorHandler = (err, res) => {
 
 // app.use(verifyToken);
 
-app.put('/werkers', (req, res, next) => {
-  // req.user.type = 'werker';
-  // return getGoogleProfile(req, res, next);
-  res.send('yay');
-});
+// app.put('/werkers', (req, res, next) => {
+//   req.user.type = 'werker';
+//   return getGoogleProfile(req, res, next);
+// });
 
 /**
  * PUT /werkers
@@ -62,10 +61,10 @@ app.put('/werkers', (req, res, next) => {
 //   .then(werker => res.json(201, werker))
 //   .catch(err => errorHandler(err, res)));
 
-app.put('/makers', (req, res, next) => {
-  req.user.type = 'maker';
-  return getGoogleProfile(req, res, next);
-});
+// app.put('/makers', (req, res, next) => {
+//   req.user.type = 'maker';
+//   return getGoogleProfile(req, res, next);
+// });
 
 /**
  * PUT /makers
