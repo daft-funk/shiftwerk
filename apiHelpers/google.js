@@ -3,15 +3,6 @@ const { oauth2Client } = require('../auth/auth');
 const { addWerker } = require('../dbHelpers/dbHelpers');
 const { models } = require('../db');
 
-// const people = google.people({
-//   version: 'v1',
-//   auth: oauth2Client,
-// });
-const calendar = google.calendar({
-  version: 'v3',
-  auth: oauth2Client,
-});
-
 /**
  * given a payload from a google JWT, gets google profile
  *
@@ -67,7 +58,11 @@ const saveGoogleProfile = (user, type) => {
   return addWerker(user);
 };
 
-const addToCalendar = async (token) => {
+const addToCalendar = async (token, client) => {
+  const calendar = google.calendar({
+    version: 'v3',
+    auth: client,
+  });
   oauth2Client.setCredentials({
     access_token: token.access_token,
   });
