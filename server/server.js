@@ -37,7 +37,7 @@ app.get('/shifts', (req, res) => {
 
 // NEED A VALID TOKEN BEYOND HERE //
 
-app.use(checkLogin);
+// app.use(checkLogin);
 
 const errorHandler = (err, res) => {
   console.error(err);
