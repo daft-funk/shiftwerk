@@ -3,6 +3,7 @@ const { google } = require('googleapis');
 const jwt = require('jsonwebtoken');
 const { getGoogleProfile, saveGoogleProfile } = require('../apiHelpers/google');
 const { models } = require('../db');
+const { getMakerByShiftId } = require('../dbHelpers/dbHelpers');
 
 const oauth2Client = new google.auth.OAuth2(
   process.env.GOOGLE_CLIENT_ID,
@@ -87,6 +88,19 @@ const checkUser = (req, res, next) => {
     const type = req.query ? req.query.type : req.body.type;
     const id = Number(req.query ? req.query.id : req.body[`${type}Id`]);
     if (id === req.user.id && type === req.user.type) {
+      return next();
+    }
+  } if (attemptedResource === 'shifts') {
+    if (req.user.type !== 'werker') {
+      return getMakerByShiftId(req.params.shiftId)
+        .then((maker) => {
+          if (maker.id === req.user.id) {
+            return next();
+          }
+          return res.status(401).send('Attempt to access unauthorized resource');
+        });
+    }
+    if (req.user.id === req.params.werkerId) {
       return next();
     }
   }
