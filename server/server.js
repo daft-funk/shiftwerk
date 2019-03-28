@@ -6,7 +6,7 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
-const { loginFlow, checkLogin } = require('../auth/auth');
+const { loginFlow, checkLogin, checkUser } = require('../auth/auth');
 
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
@@ -17,6 +17,8 @@ const { getGoogleProfile } = require('../apiHelpers/google');
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
+app.use(checkLogin);
+app.use(checkUser);
 
 app.get('/login', (req, res) => {
   const { code, type } = req.query;
@@ -57,9 +59,9 @@ const errorHandler = (err, res) => {
  * sends back new db record
  */
 
-// app.put('/werkers', (req, res) => dbHelpers.addWerker(req.user)
-//   .then(werker => res.json(201, werker))
-//   .catch(err => errorHandler(err, res)));
+app.put('/werkers', (req, res) => dbHelpers.addWerker(req.user)
+  .then(werker => res.json(201, werker))
+  .catch(err => errorHandler(err, res)));
 
 // app.put('/makers', (req, res, next) => {
 //   req.user.type = 'maker';
@@ -313,6 +315,10 @@ app.get('/makers/:makerId/fulfilled/:histOrUpcoming', async (req, res) => {
 
 // MAKER/WERKER //
 
+/**
+ * id - id of user from DB
+ * type - either 'werker' or 'maker'
+ */
 app.get('/favorites', (req, res) => {
   const { id, type } = req.query;
   return dbHelpers.getFavorites(id, type)
