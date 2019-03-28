@@ -11,14 +11,11 @@ const { loginFlow, checkLogin, checkUser } = require('../auth/auth');
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
-const { getGoogleProfile } = require('../apiHelpers/google');
 
 
 const app = express();
 app.use(bodyParser.json());
 app.use(cors());
-app.use(checkLogin);
-app.use(checkUser);
 
 app.get('/login', (req, res) => {
   const { code, type } = req.query;
@@ -38,12 +35,25 @@ app.get('/shifts', (req, res) => {
     .then(shifts => res.status(200).json(shifts));
 });
 
+// NEED A VALID TOKEN BEYOND HERE //
+
 app.use(checkLogin);
 
 const errorHandler = (err, res) => {
   console.error(err);
   return res.send(500, 'Something went wrong!');
 };
+
+app.get('/user', (req, res) => {
+  if (req.user.type === 'werker') {
+    return dbHelpers.getWerkerProfile(req.user.id)
+      .then(werker => res.status(200).json(werker))
+      .catch(err => errorHandler(err));
+  }
+  return models.Maker.findById(req.user.id)
+    .then(maker => res.status(200).json(maker))
+    .catch(err => errorHandler(err));
+});
 
 // app.use(verifyToken);
 
@@ -202,7 +212,9 @@ app.get('/shifts/:shiftId', async (req, res) => {
   return res.status(200).json(shift);
 });
 
-// app.use(checkUser);
+// RESTRICTED EXCEPT TO INDIVIDUAL USERS //
+
+app.use(checkUser);
 
 /**
  * PATCH /werkers/:werkerId
@@ -226,38 +238,6 @@ app.patch('/werkers/:werkerId', (req, res) => {
     .then(updatedWerker => res.status(204).send())
     .catch(err => errorHandler(err, res));
 });
-
-// app.put('/werkers/login', (req, res) => {
-//   const newJWT = req.body;
-//   return getProfile(newJWT)
-//     .then((profile) => {
-//       console.log(profile);
-//       return models.Werker.findOne({
-//         where: {
-//           email: profile.emailAddresses[0].value,
-//         },
-//       });
-//     })
-//     .then(werker => res.status(201).json(werker))
-//     .catch(err => errorHandler(err, res));
-// });
-
-// ----MAKER---- //
-
-// app.put('/makers/login', (req, res) => {
-//   const newJWT = req.body;
-//   return getProfile(newJWT)
-//     .then((profile) => {
-//       console.log(profile);
-//       return models.Maker.findOne({
-//         where: {
-//           email: profile.emailAddresses[0].value,
-//         },
-//       });
-//     })
-//     .then(maker => res.json(201, Object.assign(maker, { type: 'maker' })))
-//     .catch(err => res.json(201, 'bad credentials'));
-// });
 
 // ----SHIFT---- //
 
