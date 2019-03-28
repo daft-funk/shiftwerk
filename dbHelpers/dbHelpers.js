@@ -118,16 +118,19 @@ const bulkAddPositionToWerker = (werker, positions) => Promise.all(positions
  */
 const addWerker = (info) => {
   const werkerProps = {
+<<<<<<< HEAD
     access_token: info.access_token,
     refresh_token: info.refresh_token,
+=======
+>>>>>>> 657a85b1c15b5abbdfba243de463a6b34107bbd9
     name_first: info.name_first,
     name_last: info.name_last,
     email: info.email,
     url_photo: info.url_photo,
     phone: info.phone,
   };
-  return db.models.Werker.findOrCreate({
-    where: werkerProps,
+  return db.models.Werker.upsert(werkerProps, {
+    returning: true,
   })
     .catch((err) => {
       if (err.message === 'Validation error') {
