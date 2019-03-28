@@ -602,7 +602,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
  */
 
 const getApplicationsForShifts = id => db.sequelize.query(`
-SELECT DISTINCT w.*, s.name, p.position FROM "Werkers" w
+SELECT DISTINCT w.*, s.name, s.id, p.position FROM "Werkers" w
 INNER JOIN "InviteApplies" ia
 ON w.id=ia."WerkerId"
 INNER JOIN "ShiftPositions" sp
