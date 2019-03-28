@@ -422,9 +422,16 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   status,
 }, {
   where: {
-    ShiftPositionShiftId: shiftId,
     WerkerId: werkerId,
   },
+  include: [
+    {
+      model: db.models.ShiftPosition,
+      where: {
+        ShiftId: shiftId,
+      },
+    },
+  ],
   returning: true,
 }).then((updated) => {
   const updatedEntry = updated[1][0].dataValues;
@@ -434,7 +441,7 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   return db.sequelize.query(`
   UPDATE "ShiftPositions" sp
   SET filled=true
-  WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
+  WHERE sp."id"=${updatedEntry.ShiftPositionId}`)
     .spread(updatedShiftPosition => updatedShiftPosition);
 });
 
