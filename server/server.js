@@ -30,14 +30,21 @@ app.get('/login', (req, res) => {
     .catch(err => res.status(500).send(err));
 });
 
-app.get('/shifts', (req, res) => {
-  dbHelpers.getAllShifts()
-    .then(shifts => res.status(200).json(shifts));
-});
 
 // NEED A VALID TOKEN BEYOND HERE //
 
 app.use(checkLogin);
+
+app.get('/shifts', (req, res) => {
+  if (!req.query || req.user.type === 'maker') {
+    return dbHelpers.getAllShifts()
+      .then(shifts => res.status(200).json(shifts))
+      .catch(err => res.status(500).send(err));
+  }
+  return dbHelpers.getShiftsByTerm(req.query, req.user.id)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => res.status(500).send(err));
+});
 
 const errorHandler = (err, res) => {
   console.error(err);
