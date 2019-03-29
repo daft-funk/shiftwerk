@@ -58,31 +58,27 @@ const saveGoogleProfile = (user, type) => {
   return addWerker(user);
 };
 
-const addToCalendar = async (token, client) => {
+const addToCalendar = async (accessToken, refreshToken, shift, client) => {
   const calendar = google.calendar({
     version: 'v3',
     auth: client,
   });
   oauth2Client.setCredentials({
-    access_token: token.access_token,
+    access_token: accessToken,
+    refresh_token: refreshToken,
   });
   const res = await calendar.events.insert({
-    calendarId: 'aeginidae@gmail.com',
+    calendarId: 'primary',
     resource: {
-      summary: 'hello world',
-      location: '6363 St Charles Ave, New Orleans, LA 70115',
-      description: 'hello',
+      summary: shift.name,
+      location: shift.address,
+      description: shift.description,
       start: {
-        dateTime: '2019-03-25T09:00:00-07:00',
-        timeZone: 'America/Chicago',
+        dateTime: shift.start,
       },
       end: {
-        dateTime: '2019-03-25T10:00:00-07:00',
-        timeZone: 'America/Chicago',
+        dateTime: shift.end,
       },
-      attendees: [
-        { email: 'aeginidae@gmail.com' },
-      ],
     },
   });
   console.log(res.data);

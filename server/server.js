@@ -7,7 +7,7 @@ const cors = require('cors');
 
 const dbHelpers = require('../dbHelpers/dbHelpers.js');
 const { loginFlow, checkLogin, checkUser } = require('../auth/auth');
-
+const { addToCalendar } = require('../apiHelpers/google');
 const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
