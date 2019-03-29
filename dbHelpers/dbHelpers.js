@@ -179,6 +179,24 @@ const updateWerker = (werkerId, info) => db.models.Werker.update(info, {
         : new Promise(resolve => resolve(updatedWerker))));
 
 /**
+ * updates Maker entry in DB
+ *
+ * @param {number} makerId
+ * @param {object} info - new values
+ * @param {string} [info.name]
+ * @param {string} [info.email]
+ * @param {string} [info.phone]
+ * @param {string} [info.bio]
+ * @param {string} [info.certifications.url_Photo]
+ */
+const updateMaker = (makerId, info) => db.models.Maker.update(info, {
+  where: {
+    id: makerId,
+  },
+  returning: true,
+});
+
+/**
  * Function to search for shifts by various terms
  *
  * @param {object} terms - an object with search terms
@@ -678,6 +696,7 @@ module.exports = {
   bulkAddCertificationToWerker,
   bulkAddPositionToWerker,
   updateWerker,
+  updateMaker,
   getWerkersForShift,
   getWerkersByPosition,
   getShiftsForWerker,
