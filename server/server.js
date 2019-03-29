@@ -18,8 +18,8 @@ app.use(bodyParser.json());
 app.use(cors());
 
 app.get('/login', (req, res) => {
-  const { code, type } = req.query;
-  return loginFlow(code, type)
+  const { code, type, device } = req.query;
+  return loginFlow(code, type, device)
     .then((token) => {
       if (token) {
         console.log(token);
