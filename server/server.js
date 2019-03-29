@@ -239,6 +239,19 @@ app.patch('/werkers/:werkerId', (req, res) => {
     .catch(err => errorHandler(err, res));
 });
 
+/**
+ * PATCH /maker/:makerId
+ * expects any number of changed values according to {@link dbHelpers#updateMaker}
+ */
+app.patch('/maker/:makerId', (req, res) => {
+  const { makerId } = req.params;
+  const settings = req.body;
+  
+  return dbHelpers.updateMaker(makerId, settings)
+    .then(updatedMaker => res.status(204).send())
+    .catch(err => errorHandler(err, res));
+});
+
 // ----SHIFT---- //
 
 // WERKER-FACING //
