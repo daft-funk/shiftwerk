@@ -209,7 +209,7 @@ const getShiftsByTerm = async (terms, werkerId) => {
     payment_type: terms.payment_type ? `s.payment_type = ${terms.payment_type}` : 'sp.payment_type IS NOT NULL',
   };
   return db.sequelize.query(`
-  SELECT s.*, p.position FROM "Shifts" s
+  SELECT s.*, p.position, sp.payment_type, sp.payment_amnt FROM "Shifts" s
   INNER JOIN "ShiftPositions" sp
   ON s.id=sp."ShiftId"
   INNER JOIN "Positions" p
