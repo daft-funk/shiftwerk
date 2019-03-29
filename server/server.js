@@ -375,7 +375,17 @@ app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
   const { shiftId, werkerId, status } = req.params;
   dbHelpers.acceptOrDeclineShift(shiftId, werkerId, status)
     .then(() => {
-      res.send(204);
+      if (status === 'accept') {
+        return Promise.all([models.Werker.findByPk(werkerId), models.Shift.findByPk(shiftId)])
+          .then(([werker, shift]) => addToCalendar(
+            werker.access_token,
+            werker.refresh_token,
+            shift,
+            oauth2Client,
+          ))
+          .then(() => res.send(204));
+      }
+      return res.send(204);
     })
     .catch((error) => {
       console.log(error, 'unable to accept/decline');

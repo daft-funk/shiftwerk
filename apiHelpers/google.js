@@ -58,7 +58,7 @@ const saveGoogleProfile = (user, type) => {
   return addWerker(user);
 };
 
-const addToCalendar = async (accessToken, refreshToken, shift, client) => {
+const addToCalendar = (accessToken, refreshToken, shift, client) => {
   const calendar = google.calendar({
     version: 'v3',
     auth: client,
@@ -67,8 +67,7 @@ const addToCalendar = async (accessToken, refreshToken, shift, client) => {
     access_token: accessToken,
     refresh_token: refreshToken,
   });
-  console.log(shift.start, shift.end);
-  const res = await calendar.events.insert({
+  calendar.events.insert({
     calendarId: 'primary',
     resource: {
       summary: shift.name,
@@ -81,9 +80,9 @@ const addToCalendar = async (accessToken, refreshToken, shift, client) => {
         dateTime: shift.end,
       },
     },
-  });
-  console.log(res.data);
-  return shift;
+  })
+    .then(() => shift)
+    .catch(err => console.error(err));
 };
 
 const removeFromCalendar = () => {};
