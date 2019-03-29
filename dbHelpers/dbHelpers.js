@@ -224,19 +224,21 @@ const getShiftsByTerm = async (terms, werkerId) => {
   const conditions = {
     position: terms.position ? `sp."PositionId" = ${terms.position}` : 'sp."PositionId" IS NOT NULL',
     payment_amnt: terms.payment_amnt ? `sp.payment_amnt >= ${terms.payment_amnt}` : 'sp.payment_amnt IS NOT NULL',
-    payment_type: terms.payment_type ? `s.payment_type = ${terms.payment_type}` : 's.payment_type IS NOT NULL',
+    payment_type: terms.payment_type ? `s.payment_type = ${terms.payment_type}` : 'sp.payment_type IS NOT NULL',
   };
   return db.sequelize.query(`
-  SELECT * FROM "Shifts" s
+  SELECT s.*, p.position, sp.payment_type, sp.payment_amnt FROM "Shifts" s
   INNER JOIN "ShiftPositions" sp
   ON s.id=sp."ShiftId"
   INNER JOIN "Positions" p
   ON p.id=sp."PositionId"
   WHERE ${conditions.position} AND ${conditions.payment_amnt} AND ${conditions.payment_type} AND sp.filled=false`)
-    .spread(shifts => filterByDistance((terms.proximity || 3), {
-      latitude: werker.lat,
-      longitude: werker.long,
-    }, shifts));
+    .spread(shifts => shifts)
+    // filterByDistance((terms.proximity || 3), {
+    // latitude: werker.lat,
+    // longitude: werker.long,
+  // }, shifts))
+    .catch(err => console.error(err));
 };
 
 /**
@@ -440,9 +442,16 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   status,
 }, {
   where: {
-    ShiftPositionShiftId: shiftId,
     WerkerId: werkerId,
   },
+  include: [
+    {
+      model: db.models.ShiftPosition,
+      where: {
+        ShiftId: shiftId,
+      },
+    },
+  ],
   returning: true,
 }).then((updated) => {
   const updatedEntry = updated[1][0].dataValues;
@@ -452,7 +461,7 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   return db.sequelize.query(`
   UPDATE "ShiftPositions" sp
   SET filled=true
-  WHERE sp."ShiftId"=${updatedEntry.ShiftPositionShiftId} AND sp."PositionId"=${updatedEntry.ShiftPositionPositionId}`)
+  WHERE sp."id"=${updatedEntry.ShiftPositionId}`)
     .spread(updatedShiftPosition => updatedShiftPosition);
 });
 
@@ -620,7 +629,7 @@ const getAcceptedShifts = (id, histOrUpcoming) => {
  */
 
 const getApplicationsForShifts = id => db.sequelize.query(`
-SELECT DISTINCT w.*, s.name, p.position FROM "Werkers" w
+SELECT DISTINCT w.*, s.name as "shiftName", s.id as "shiftId", p.position FROM "Werkers" w
 INNER JOIN "InviteApplies" ia
 ON w.id=ia."WerkerId"
 INNER JOIN "ShiftPositions" sp
