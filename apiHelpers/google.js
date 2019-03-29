@@ -63,10 +63,11 @@ const addToCalendar = async (accessToken, refreshToken, shift, client) => {
     version: 'v3',
     auth: client,
   });
-  oauth2Client.setCredentials({
+  client.setCredentials({
     access_token: accessToken,
     refresh_token: refreshToken,
   });
+  console.log(shift.start, shift.end);
   const res = await calendar.events.insert({
     calendarId: 'primary',
     resource: {
@@ -82,6 +83,7 @@ const addToCalendar = async (accessToken, refreshToken, shift, client) => {
     },
   });
   console.log(res.data);
+  return shift;
 };
 
 const removeFromCalendar = () => {};

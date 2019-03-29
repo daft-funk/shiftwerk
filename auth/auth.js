@@ -116,6 +116,7 @@ const checkUser = (req, res, next) => {
 };
 
 module.exports = {
+  oauth2Client,
   loginFlow,
   checkLogin,
   checkUser,
