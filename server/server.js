@@ -392,11 +392,17 @@ app.put('/text', (req, res) => {
     .then((werkers) => {
       const numbers = werkers.filter(werker => werker.phone).map(werker => werker.phone);
       if (numbers.length) {
-        return twilio.massText(message, numbers);
+        // pass along a boolean - true if all werkers have a number, false if not
+        return Promise.all([twilio.massText(message, numbers), numbers.length === werkers.length];
       }
       return res.status(500).send('None of the werkers have a registered phone number.');
     })
-    .then(notification => res.status(201).json(notification.sid))
+    .then(([notification, allWerkersHaveNumber]) => {
+      if (allWerkersHaveNumber) {
+        return res.status(201).json({ sid: notification.sid });
+      }
+      return res.status(201).json({sid: notification.sid, warning: 'Not all werkers have a registered phone number.' });
+    })
     .catch(err => errorHandler(err, res));
 });
 
