@@ -1,4 +1,4 @@
-const client = require('twilio')(process.env.TWILIO_TEST_SID, process.env.TWILIO_TEST_AUTH_TOKEN);
+const client = require('twilio')(process.env.TWILIO_SID, process.env.TWILIO_AUTH_TOKEN);
 
 const service = client.notify.services(process.env.TWILIO_NOTIFY_SERVICE_SID);
 
@@ -16,6 +16,5 @@ module.exports.massText = (body, numbers) => {
     toBinding: bindings,
     body,
   })
-    .then(notification => console.log(notification))
     .catch(err => console.error(err));
 };
