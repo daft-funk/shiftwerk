@@ -12,6 +12,10 @@ const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
 
+const errorHandler = (err, res) => {
+  console.error(err);
+  return res.send(500, 'Something went wrong!');
+};
 
 const app = express();
 app.use(bodyParser.json());
@@ -30,7 +34,6 @@ app.get('/login', (req, res) => {
     .catch(err => res.status(500).send(err));
 });
 
-
 // NEED A VALID TOKEN BEYOND HERE //
 
 app.use(checkLogin);
@@ -45,11 +48,6 @@ app.get('/shifts', (req, res) => {
     .then(shifts => res.status(200).json(shifts))
     .catch(err => res.status(500).send(err));
 });
-
-const errorHandler = (err, res) => {
-  console.error(err);
-  return res.send(500, 'Something went wrong!');
-};
 
 app.get('/user', (req, res) => {
   if (req.user.type === 'werker') {
@@ -370,15 +368,36 @@ app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
     });
 });
 
-app.put('/shifts/:shiftId/:werkerId/rating/:type/:rating', async (req, res) => {
+app.put('/shifts/:shiftId/:werkerId/rating/:type/:rating', (req, res) => {
   const {
     shiftId,
     werkerId,
     rating,
     type,
   } = req.params;
-  const newRating = await dbHelpers.rateShift(shiftId, werkerId, rating, type).catch(err => errorHandler(err, res));
-  return res.send(201, newRating);
+  return dbHelpers.rateShift(shiftId, werkerId, rating, type)
+    .then(newRating => res.send(201, newRating))
+    .catch(err => errorHandler(err, res));
+});
+
+/**
+ * sends a text to all werkers on a shift
+ * body expects:
+ *  shiftId
+ *  message
+ */
+app.put('/text', (req, res) => {
+  const { shiftId, message } = req.body;
+  return dbHelpers.getAllWerkersOnShift(shiftId)
+    .then((werkers) => {
+      const numbers = werkers.filter(werker => werker.phone).map(werker => werker.phone);
+      if (numbers.length) {
+        return twilio.massText(message, numbers);
+      }
+      return res.status(500).send('None of the werkers have a registered phone number.');
+    })
+    .then(notification => res.status(201).json(notification.sid))
+    .catch(err => errorHandler(err, res));
 });
 
 const port = process.env.PORT || 4000;
