@@ -12,6 +12,8 @@ const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
 
+const capitalize = string => string[0].toUppercase().concat(string.slice(1).toLowercase());
+
 const errorHandler = (err, res) => {
   console.error(err);
   return res.send(500, 'Something went wrong!');
@@ -38,17 +40,6 @@ app.get('/login', (req, res) => {
 
 app.use(checkLogin);
 
-app.get('/shifts', (req, res) => {
-  if (!req.query || req.user.type === 'maker') {
-    return dbHelpers.getAllShifts()
-      .then(shifts => res.status(200).json(shifts))
-      .catch(err => res.status(500).send(err));
-  }
-  return dbHelpers.getShiftsByTerm(req.query, req.user.id)
-    .then(shifts => res.status(200).json(shifts))
-    .catch(err => res.status(500).send(err));
-});
-
 app.get('/user', (req, res) => {
   if (req.user.type === 'werker') {
     return dbHelpers.getWerkerProfile(req.user.id)
@@ -60,35 +51,93 @@ app.get('/user', (req, res) => {
     .catch(err => errorHandler(err));
 });
 
+app.patch('/user', (req, res) => {
+  return dbHelpers[`update${capitalize(req.user.type)}`](req.body)
+    .then(() => res.status(204).send())
+    .catch(err => errorHandler(err, res));
+});
+
 /**
- * PUT /werkers
- * expects JWT as body
- * creates new resource in db
- * sends back new db record
+ * @todo sign user out of google
  */
+app.delete('/user', (req, res) => {
+  return dbHelpers.models[capitalize(req.user.type)].destroy({
+    where: {
+      id: req.user.id,
+    },
+  })
+    .then(() => res.status(204).send())
+    .catch(err => errorHandler(err));
+});
 
-app.put('/werkers', (req, res) => dbHelpers.addWerker(req.body)
-  .then(werker => res.json(201, werker))
-  .catch(err => errorHandler(err, res)));
+app.get('/shifts', (req, res) => {
+  if (!req.query || req.user.type === 'maker') {
+    return dbHelpers.getAllShifts()
+      .then(shifts => res.status(200).json(shifts))
+      .catch(err => res.status(500).send(err));
+  }
+  return dbHelpers.getShiftsByTerm(req.query, req.user.id)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => res.status(500).send(err));
+});
 
 /**
- * PUT /makers
+ * PUT /shifts
  * expects body with the following properties:
  *  name
- *  url_photo
- *  email
- *  phone
- * creates new resource in db
- * sends back new db record
+ *  start
+ *  end
+ *  address
+ *  description
+ *  positions[]
+ *   position is obj with:
+ *   position
+ *   payment_amnt
+ *   payment_type
  */
+app.put('/shifts', (req, res) => {
+  const { body } = req;
+  body.positions = body.positions.map((position) => {
+    const digit = /\d/.exec(Object.keys(position)[1])[0];
+    console.log(digit);
+    return {
+      position: position[`position${digit}`],
+      payment_amnt: position[`payment_amnt${digit}`],
+      payment_type: position[`payment_type${digit}`],
+    };
+  });
+  return geocode(body.address)
+    .then(({ lat, lon }) => {
+      body.lat = lat;
+      body.long = lon;
+      return reverseGeocode(lat, lon);
+    })
+    .then((address) => {
+      body.address = address;
+      return dbHelpers.createShift(Object.assign(body, { MakerId: req.user.id }));
+    })
+    .then(() => addToCalendar(
+      req.user.accessToken,
+      req.user.refreshToken,
+      body,
+      oauth2Client,
+    ))
+    .then(shift => res.status(201).json(shift))
+    .catch(err => errorHandler(err));
+});
 
-app.put('/makers', (req, res) => {
-  console.log(req.body);
-  return models.Maker.upsert(req.body, {
-    returning: true,
-  })
-    .spread(maker => res.json(201, maker))
-    .catch(err => errorHandler(err, res));
+app.patch('/shifts/:shiftId', (req, res) => {
+  res.status(501).send();
+});
+
+app.delete('/shifts/:shiftId', (req, res) => {
+  const { shiftId } = req.params;
+  return dbHelpers.deleteShift(shiftId)
+    .then(() => res.send(204))
+    .catch((err) => {
+      console.error(err);
+      res.status(500).send('unable to delete');
+    });
 });
 
 // ----WERKER---- ////
@@ -139,62 +188,6 @@ app.get('/makers/:makerId', (req, res) => {
 app.get('/werkers/:werkerId/shifts', async (req, res) => {
   const shifts = await dbHelpers.getShiftsByTerm(req.query).catch(err => errorHandler(err, res));
   return res.status(200).json(shifts);
-});
-
-/**
- * PUT /shifts
- * expects body with the following properties:
- *  MakerId
- *  name
- *  start
- *  end
- *  address
- *  description
- *  positions[]
- *   position is obj with:
- *   position
- *   payment_amnt
- *   payment_type
- */
-app.put('/shifts', (req, res) => {
-  const { body } = req;
-  body.positions = body.positions.map((position) => {
-    const digit = /\d/.exec(Object.keys(position)[1])[0];
-    console.log(digit);
-    return {
-      position: position[`position${digit}`],
-      payment_amnt: position[`payment_amnt${digit}`],
-      payment_type: position[`payment_type${digit}`],
-    };
-  });
-  return geocode(body.address)
-    .then(({ lat, lon }) => {
-      body.lat = lat;
-      body.long = lon;
-      return reverseGeocode(lat, lon);
-    })
-    .then((address) => {
-      body.address = address;
-      return dbHelpers.createShift(body);
-    })
-    .then(shift => addToCalendar(
-      req.user.accessToken,
-      req.user.refreshToken,
-      body,
-      oauth2Client,
-    ))
-    .then(shift => res.status(201).json(shift))
-    .catch(err => errorHandler(err));
-});
-
-app.delete('/shifts/:shiftId', (req, res) => {
-  const { shiftId } = req.params;
-  return dbHelpers.deleteShift(shiftId)
-    .then(() => res.send(204))
-    .catch((err) => {
-      console.error(err);
-      res.status(500).send('unable to delete');
-    });
 });
 
 // get detailed shift info by Id for maker and werker
