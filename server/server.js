@@ -103,6 +103,16 @@ app.get('/werkers/:werkerId', (req, res) => {
     });
 });
 
+// get werkers by position
+app.get('/werkers/search/:positionName', (req, res) => {
+  dbHelpers.getWerkersByPosition(req.params.positionName)
+    .then(werkers => res.json(200, werkers))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'something went wrong!');
+    });
+});
+
 // get a maker's profile
 app.get('/makers/:makerId', (req, res) => {
   models.Maker.findOne({ where: { id: req.params.makerId } })
@@ -192,28 +202,7 @@ app.delete('/shifts/:shiftId', (req, res) => {
     });
 });
 
-// get werkers by position
-app.get('/werkers/search/:positionName', (req, res) => {
-  dbHelpers.getWerkersByPosition(req.params.positionName)
-    .then(werkers => res.json(200, werkers))
-    .catch((err) => {
-      console.error(err);
-      res.send(500, 'something went wrong!');
-    });
-});
-
-// ----SHIFT---- //
-
-// WERKER-FACING //
-
-// gets all shifts a werker is eligible for based on positions
-app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
-  const { werkerId } = req.params;
-  const shifts = await dbHelpers.getShiftsForWerker(werkerId).catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// histOrUpcoming is either 'history' or 'upcoming'
+// query expects key of "shifts"
 app.get('/user/shifts', (req, res) => {
   const { query } = req;
   let dbMethod = '';
@@ -246,29 +235,35 @@ app.get('/user/shifts', (req, res) => {
     .catch(err => errorHandler(err));
 });
 
-// MAKER/WERKER //
-
-/**
- * id - id of user from DB
- * type - either 'werker' or 'maker'
- */
 app.get('/favorites', (req, res) => {
-  const { id, type } = req.query;
+  const { id, type } = req.user;
   return dbHelpers.getFavorites(id, type)
     .then(faves => res.status(200).json(faves))
-    .catch(err => errorHandler(err));
+    .catch(err => errorHandler(err, res));
 });
 
 app.put('/favorites', (req, res) => {
-  const { makerId, werkerId, type } = req.body;
-  return dbHelpers.addFavorite(makerId, werkerId, type)
+  const { targetId } = req.body;
+  const { type, id } = req.user;
+  if (type === 'maker') {
+    return dbHelpers.addFavorite(id, targetId, type)
+      .then(fave => res.status(201).json(fave))
+      .catch(err => errorHandler(err, res));
+  }
+  return dbHelpers.addFavorite(targetId, id, type)
     .then(fave => res.status(201).json(fave))
     .catch(err => errorHandler(err, res));
 });
 
 app.delete('/favorites', (req, res) => {
-  const { makerId, werkerId, type } = req.body;
-  return dbHelpers.deleteFavorite(makerId, werkerId, type)
+  const { targetId } = req.body;
+  const { type, id } = req.user;
+  if (type === 'maker') {
+    return dbHelpers.deleteFavorite(id, targetId, type)
+      .then(deleted => res.status(201).json(deleted))
+      .catch(err => errorHandler(err, res));
+  }
+  return dbHelpers.deleteFavorite(targetId, id, type)
     .then(deleted => res.status(201).json(deleted))
     .catch(err => errorHandler(err, res));
 });
