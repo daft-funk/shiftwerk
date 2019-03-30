@@ -81,6 +81,39 @@ app.delete('/user', (req, res) => {
     .catch(err => errorHandler(err));
 });
 
+// query expects key of "shifts"
+app.get('/user/shifts', (req, res) => {
+  const { query } = req;
+  let dbMethod = '';
+  let additionalArgument = '';
+  if (req.user.type === 'werker') {
+    if (query.shifts === 'upcoming' || query.shifts === 'history') {
+      dbMethod = 'getAcceptedShifts';
+      additionalArgument = query.shifts;
+    } else if (query.shifts === 'invite') {
+      dbMethod = 'getInvitedShifts';
+    } else if (query.shifts === 'available') {
+      dbMethod = 'getAvailableShifts';
+    } else {
+      return res.status(400).send('Bad query string');
+    }
+  } else {
+    if (query.shifts === 'upcoming' || query.shifts === 'history') {
+      dbMethod = 'getFulfilledShifts';
+      additionalArgument = query.shifts;
+    } else if (query.shifts === 'apply') {
+      dbMethod = 'getApplicationsForShifts';
+    } else if (query.shifts === 'unfulfilled') {
+      dbMethod = 'getUnfulfilledShifts';
+    } else {
+      return res.status(400).send('Bad query string');
+    }
+  }
+  return dbHelpers[dbMethod](req.user.id, additionalArgument)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err));
+});
+
 // get profile for werker
 app.get('/werkers/:werkerId', (req, res) => {
   return dbHelpers.getWerkerProfile(req.params.werkerId)
@@ -202,39 +235,6 @@ app.delete('/shifts/:shiftId', (req, res) => {
     });
 });
 
-// query expects key of "shifts"
-app.get('/user/shifts', (req, res) => {
-  const { query } = req;
-  let dbMethod = '';
-  let additionalArgument = '';
-  if (req.user.type === 'werker') {
-    if (query.shifts === 'upcoming' || query.shifts === 'history') {
-      dbMethod = 'getAcceptedShifts';
-      additionalArgument = query.shifts;
-    } else if (query.shifts === 'invite') {
-      dbMethod = 'getInvitedShifts';
-    } else if (query.shifts === 'available') {
-      dbMethod = 'getAvailableShifts';
-    } else {
-      return res.status(400).send('Bad query string');
-    }
-  } else {
-    if (query.shifts === 'upcoming' || query.shifts === 'history') {
-      dbMethod = 'getFulfilledShifts';
-      additionalArgument = query.shifts;
-    } else if (query.shifts === 'apply') {
-      dbMethod = 'getApplicationsForShifts';
-    } else if (query.shifts === 'unfulfilled') {
-      dbMethod = 'getUnfulfilledShifts';
-    } else {
-      return res.status(400).send('Bad query string');
-    }
-  }
-  return dbHelpers[dbMethod](req.user.id, additionalArgument)
-    .then(shifts => res.status(200).json(shifts))
-    .catch(err => errorHandler(err));
-});
-
 // either apply or invite to shift
 app.put('/shifts/:shiftId/applications', (req, res) => {
   const { shiftId } = req.params;
@@ -294,27 +294,27 @@ app.get('/favorites', (req, res) => {
 });
 
 app.put('/favorites', (req, res) => {
-  const { targetId } = req.body;
+  const { target } = req.query;
   const { type, id } = req.user;
   if (type === 'maker') {
-    return dbHelpers.addFavorite(id, targetId, type)
+    return dbHelpers.addFavorite(id, target, type)
       .then(fave => res.status(201).json(fave))
       .catch(err => errorHandler(err, res));
   }
-  return dbHelpers.addFavorite(targetId, id, type)
+  return dbHelpers.addFavorite(target, id, type)
     .then(fave => res.status(201).json(fave))
     .catch(err => errorHandler(err, res));
 });
 
 app.delete('/favorites', (req, res) => {
-  const { targetId } = req.body;
+  const { target } = req.query;
   const { type, id } = req.user;
   if (type === 'maker') {
-    return dbHelpers.deleteFavorite(id, targetId, type)
+    return dbHelpers.deleteFavorite(id, target, type)
       .then(deleted => res.status(201).json(deleted))
       .catch(err => errorHandler(err, res));
   }
-  return dbHelpers.deleteFavorite(targetId, id, type)
+  return dbHelpers.deleteFavorite(target, id, type)
     .then(deleted => res.status(201).json(deleted))
     .catch(err => errorHandler(err, res));
 });
