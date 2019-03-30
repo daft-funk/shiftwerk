@@ -235,6 +235,57 @@ app.get('/user/shifts', (req, res) => {
     .catch(err => errorHandler(err));
 });
 
+// either apply or invite to shift
+app.put('/shifts/:shiftId/applications', (req, res) => {
+  const { shiftId } = req.params;
+  const { position, werker } = req.query;
+  const { id, type } = req.user;
+  const appType = type === 'maker' ? 'invite' : 'apply';
+  dbHelpers.applyOrInviteForShift(shiftId, werker || id, position, appType)
+    .then(() => {
+      res.send(201);
+    })
+    .catch((error) => {
+      console.log(error, 'unable to apply');
+      res.status(500).send('unable to apply');
+    });
+});
+
+// accept or decline shift
+app.patch('/shifts/:shiftId/applications', (req, res) => {
+  const { status, werker } = req.query;
+  const { shiftId } = req.params;
+  const { id } = req.user;
+  dbHelpers.acceptOrDeclineShift(shiftId, werker || id, status)
+    .then(() => {
+      if (status === 'accept') {
+        return Promise.all([models.Werker.findByPk(werker || id), models.Shift.findByPk(shiftId)])
+          .then(([werker, shift]) => addToCalendar(
+            werker.access_token,
+            werker.refresh_token,
+            shift,
+            oauth2Client,
+          ))
+          .then(() => res.send(204));
+      }
+      return res.send(204);
+    })
+    .catch((error) => {
+      console.log(error, 'unable to accept/decline');
+      res.status(500).send('unable to accept/decline');
+    });
+});
+
+app.put('/shifts/:shiftId/rating', (req, res) => {
+  const { shiftId } = req.params;
+  const { rating, werker } = req.query;
+  const { id, type } = req.user;
+  const ratingType = type === 'maker' ? 'werker' : 'maker';
+  return dbHelpers.rateShift(shiftId, werker || id, rating, ratingType)
+    .then(newRating => res.send(201, newRating))
+    .catch(err => errorHandler(err, res));
+});
+
 app.get('/favorites', (req, res) => {
   const { id, type } = req.user;
   return dbHelpers.getFavorites(id, type)
@@ -265,60 +316,6 @@ app.delete('/favorites', (req, res) => {
   }
   return dbHelpers.deleteFavorite(targetId, id, type)
     .then(deleted => res.status(201).json(deleted))
-    .catch(err => errorHandler(err, res));
-});
-
-// apply or invite for shift
-// applyOrInvite must be string "apply" or "invite"
-app.put('/shifts/:shiftId/:applyOrInvite/:werkerId/:positionName', (req, res) => {
-  const {
-    shiftId,
-    applyOrInvite,
-    werkerId,
-    positionName,
-  } = req.params;
-  dbHelpers.applyOrInviteForShift(shiftId, werkerId, positionName, applyOrInvite)
-    .then(() => {
-      res.send(201);
-    })
-    .catch((error) => {
-      console.log(error, 'unable to apply');
-      res.status(500).send('unable to apply');
-    });
-});
-
-// accept or decline shift
-app.patch('/shifts/:shiftId/application/:werkerId/:status', (req, res) => {
-  const { shiftId, werkerId, status } = req.params;
-  dbHelpers.acceptOrDeclineShift(shiftId, werkerId, status)
-    .then(() => {
-      if (status === 'accept') {
-        return Promise.all([models.Werker.findByPk(werkerId), models.Shift.findByPk(shiftId)])
-          .then(([werker, shift]) => addToCalendar(
-            werker.access_token,
-            werker.refresh_token,
-            shift,
-            oauth2Client,
-          ))
-          .then(() => res.send(204));
-      }
-      return res.send(204);
-    })
-    .catch((error) => {
-      console.log(error, 'unable to accept/decline');
-      res.status(500).send('unable to accept/decline');
-    });
-});
-
-app.put('/shifts/:shiftId/:werkerId/rating/:type/:rating', (req, res) => {
-  const {
-    shiftId,
-    werkerId,
-    rating,
-    type,
-  } = req.params;
-  return dbHelpers.rateShift(shiftId, werkerId, rating, type)
-    .then(newRating => res.send(201, newRating))
     .catch(err => errorHandler(err, res));
 });
 
