@@ -12,7 +12,7 @@ const { geocode, reverseGeocode } = require('../apiHelpers/tomtom');
 const { models } = require('../db/index');
 const twilio = require('../apiHelpers/twilio');
 
-const capitalize = string => string[0].toUppercase().concat(string.slice(1).toLowercase());
+const capitalize = string => string[0].toUpperCase().concat(string.slice(1).toLowerCase());
 
 const errorHandler = (err, res) => {
   console.error(err);
@@ -43,7 +43,7 @@ app.use(checkLogin);
 app.get('/user', (req, res) => {
   if (req.user.type === 'werker') {
     return dbHelpers.getWerkerProfile(req.user.id)
-      .then(werker => {
+      .then((werker) => {
         if (werker.dataValues.lat) {
           return reverseGeocode(werker.dataValues.lat, werker.dataValues.long)
             .then(address => Object.assign(werker, {
@@ -63,7 +63,12 @@ app.get('/user', (req, res) => {
 });
 
 app.patch('/user', (req, res) => {
-  return dbHelpers[`update${capitalize(req.user.type)}`](req.body)
+  console.log(req.body);
+  if (!req.body) {
+    res.status(204).send();
+  }
+  const dbMethod = req.user.type === 'werker' ? dbHelpers.updateWerker : dbHelpers.updateMaker;
+  return dbMethod(req.user.id, req.body)
     .then(() => res.status(204).send())
     .catch(err => errorHandler(err, res));
 });
@@ -84,32 +89,34 @@ app.delete('/user', (req, res) => {
 // query expects key of "shifts"
 app.get('/user/shifts', (req, res) => {
   const { query } = req;
-  let dbMethod = '';
+  let dbMethod;
   let additionalArgument = '';
   if (req.user.type === 'werker') {
     if (query.shifts === 'upcoming' || query.shifts === 'history') {
-      dbMethod = 'getAcceptedShifts';
+      dbMethod = dbHelpers.getAcceptedShifts;
       additionalArgument = query.shifts;
     } else if (query.shifts === 'invite') {
-      dbMethod = 'getInvitedShifts';
+      dbMethod = dbHelpers.getInvitedShifts;
     } else if (query.shifts === 'available') {
-      dbMethod = 'getAvailableShifts';
+      dbMethod = dbHelpers.getShiftsForWerker;
+    } else {
+      return res.status(400).send('Bad query string');
+    }
+  } else if (req.user.type === 'werker') {
+    if (query.shifts === 'upcoming' || query.shifts === 'history') {
+      dbMethod = dbHelpers.getFulfilledShifts;
+      additionalArgument = query.shifts;
+    } else if (query.shifts === 'apply') {
+      dbMethod = dbHelpers.getApplicationsForShifts;
+    } else if (query.shifts === 'unfulfilled') {
+      dbMethod = dbHelpers.getUnfulfilledShifts;
     } else {
       return res.status(400).send('Bad query string');
     }
   } else {
-    if (query.shifts === 'upcoming' || query.shifts === 'history') {
-      dbMethod = 'getFulfilledShifts';
-      additionalArgument = query.shifts;
-    } else if (query.shifts === 'apply') {
-      dbMethod = 'getApplicationsForShifts';
-    } else if (query.shifts === 'unfulfilled') {
-      dbMethod = 'getUnfulfilledShifts';
-    } else {
-      return res.status(400).send('Bad query string');
-    }
+    return errorHandler('', res);
   }
-  return dbHelpers[dbMethod](req.user.id, additionalArgument)
+  return dbMethod(req.user.id, additionalArgument)
     .then(shifts => res.status(200).json(shifts))
     .catch(err => errorHandler(err));
 });
@@ -332,7 +339,7 @@ app.put('/text', (req, res) => {
       const numbers = werkers.filter(werker => werker.phone).map(werker => werker.phone);
       if (numbers.length) {
         // pass along a boolean - true if all werkers have a number, false if not
-        return Promise.all([twilio.massText(message, numbers), numbers.length === werkers.length];
+        return Promise.all([twilio.massText(message, numbers), numbers.length === werkers.length]);
       }
       return res.status(500).send('None of the werkers have a registered phone number.');
     })
