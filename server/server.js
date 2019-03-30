@@ -43,7 +43,18 @@ app.use(checkLogin);
 app.get('/user', (req, res) => {
   if (req.user.type === 'werker') {
     return dbHelpers.getWerkerProfile(req.user.id)
-      .then(werker => res.status(200).json(werker))
+      .then(werker => {
+        if (werker.dataValues.lat) {
+          return reverseGeocode(werker.dataValues.lat, werker.dataValues.long)
+            .then(address => Object.assign(werker, {
+              dataValues: Object.assign(werker.dataValues, {
+                address,
+              }),
+            }));
+        }
+        return new Promise(resolve => resolve(werker));
+      })
+      .then(werker => res.json(200, werker))
       .catch(err => errorHandler(err));
   }
   return models.Maker.findById(req.user.id)
@@ -70,6 +81,39 @@ app.delete('/user', (req, res) => {
     .catch(err => errorHandler(err));
 });
 
+// get profile for werker
+app.get('/werkers/:werkerId', (req, res) => {
+  return dbHelpers.getWerkerProfile(req.params.werkerId)
+    .then((profile) => {
+      console.log(profile);
+      if (profile.dataValues.lat) {
+        return reverseGeocode(profile.dataValues.lat, profile.dataValues.long)
+          .then(address => Object.assign(profile, {
+            dataValues: Object.assign(profile.dataValues, {
+              address,
+            }),
+          }));
+      }
+      return new Promise(resolve => resolve(profile));
+    })
+    .then(profile => res.json(200, profile))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'something went wrong!');
+    });
+});
+
+// get a maker's profile
+app.get('/makers/:makerId', (req, res) => {
+  models.Maker.findOne({ where: { id: req.params.makerId } })
+    .then(maker => res.json(201, maker))
+    .catch((err) => {
+      console.error(err);
+      res.send(500, 'Something went wrong!');
+    });
+});
+
+// used for getting all shifts for testing or searching by terms
 app.get('/shifts', (req, res) => {
   if (!req.query || req.user.type === 'maker') {
     return dbHelpers.getAllShifts()
@@ -79,6 +123,14 @@ app.get('/shifts', (req, res) => {
   return dbHelpers.getShiftsByTerm(req.query, req.user.id)
     .then(shifts => res.status(200).json(shifts))
     .catch(err => res.status(500).send(err));
+});
+
+// get detailed shift info by Id for maker and werker
+app.get('/shifts/:shiftId', async (req, res) => {
+  const { shiftId } = req.params;
+  // TODO check helper function name
+  const shift = await dbHelpers.getShiftsById(shiftId).catch(err => errorHandler(err, res));
+  return res.status(200).json(shift);
 });
 
 /**
@@ -140,30 +192,6 @@ app.delete('/shifts/:shiftId', (req, res) => {
     });
 });
 
-// ----WERKER---- ////
-
-// get profile for werker
-app.get('/werkers/:werkerId', (req, res) => {
-  return dbHelpers.getWerkerProfile(req.params.werkerId)
-    .then((profile) => {
-      console.log(profile);
-      if (profile.dataValues.lat) {
-        return reverseGeocode(profile.dataValues.lat, profile.dataValues.long)
-          .then(address => Object.assign(profile, {
-            dataValues: Object.assign(profile.dataValues, {
-              address,
-            }),
-          }));
-      }
-      return new Promise(resolve => resolve(profile));
-    })
-    .then(profile => res.json(200, profile))
-    .catch((err) => {
-      console.error(err);
-      res.send(500, 'something went wrong!');
-    });
-});
-
 // get werkers by position
 app.get('/werkers/search/:positionName', (req, res) => {
   dbHelpers.getWerkersByPosition(req.params.positionName)
@@ -172,70 +200,6 @@ app.get('/werkers/search/:positionName', (req, res) => {
       console.error(err);
       res.send(500, 'something went wrong!');
     });
-});
-
-// get a maker's profile
-app.get('/makers/:makerId', (req, res) => {
-  models.Maker.findOne({ where: { id: req.params.makerId } })
-    .then(maker => res.json(201, maker))
-    .catch((err) => {
-      console.error(err);
-      res.send(500, 'Something went wrong!');
-    });
-});
-
-// get list of shifts by terms
-app.get('/werkers/:werkerId/shifts', async (req, res) => {
-  const shifts = await dbHelpers.getShiftsByTerm(req.query).catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// get detailed shift info by Id for maker and werker
-app.get('/shifts/:shiftId', async (req, res) => {
-  const { shiftId } = req.params;
-  // TODO check helper function name
-  const shift = await dbHelpers.getShiftsById(shiftId).catch(err => errorHandler(err, res));
-  return res.status(200).json(shift);
-});
-
-// RESTRICTED EXCEPT TO INDIVIDUAL USERS //
-
-// app.use(checkUser);
-
-/**
- * PATCH /werkers/:werkerId
- * expects any number of changed values according to {@link dbHelpers#updateWerker}
- */
-app.patch('/werkers/:werkerId', (req, res) => {
-  const { werkerId } = req.params;
-  const settings = req.body;
-  if (settings.address) {
-    return geocode(settings.address)
-      .then(({ lat, lon }) => {
-        settings.lat = lat;
-        settings.long = lon;
-        return reverseGeocode(lat, lon);
-      })
-      .then(address => dbHelpers.updateWerker(werkerId, Object.assign(settings, { address })))
-      .then(updatedWerker => res.status(204).send())
-      .catch(err => errorHandler(err, res));
-  }
-  return dbHelpers.updateWerker(werkerId, settings)
-    .then(updatedWerker => res.status(204).send())
-    .catch(err => errorHandler(err, res));
-});
-
-/**
- * PATCH /maker/:makerId
- * expects any number of changed values according to {@link dbHelpers#updateMaker}
- */
-app.patch('/maker/:makerId', (req, res) => {
-  const { makerId } = req.params;
-  const settings = req.body;
-  
-  return dbHelpers.updateMaker(makerId, settings)
-    .then(updatedMaker => res.status(204).send())
-    .catch(err => errorHandler(err, res));
 });
 
 // ----SHIFT---- //
@@ -250,46 +214,36 @@ app.get('/werkers/:werkerId/shifts/available', async (req, res) => {
 });
 
 // histOrUpcoming is either 'history' or 'upcoming'
-app.get('/werkers/:werkerId/shifts/:histOrUpcoming', async (req, res) => {
-  const { werkerId, histOrUpcoming } = req.params;
-  const shifts = await dbHelpers.getAcceptedShifts(werkerId, histOrUpcoming)
-    .catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// get all shifts werker is invited to
-app.get('/werkers/:werkerId/invitations', async (req, res) => {
-  const { werkerId } = req.params;
-  const shifts = await dbHelpers.getInvitedShifts(werkerId).catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// MAKER-FACING //
-
-// get all applications to a maker's shifts
-app.get('/makers/:makerId/applications', async (req, res) => {
-  const { makerId } = req.params;
-  const werkers = await dbHelpers.getApplicationsForShifts(makerId)
-    .catch(err => errorHandler(err, res));
-  console.log(werkers);
-  return res.status(200).json(werkers);
-});
-
-// get all unfulfilled shifts of a maker
-app.get('/makers/:makerId/unfulfilled', async (req, res) => {
-  const { makerId } = req.params;
-  const shifts = await dbHelpers.getUnfulfilledShifts(makerId)
-    .catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
-});
-
-// get all fulfilled shifts for a maker
-// histOrUpcoming is either 'history' or 'upcoming'
-app.get('/makers/:makerId/fulfilled/:histOrUpcoming', async (req, res) => {
-  const { makerId, histOrUpcoming } = req.params;
-  const shifts = await dbHelpers.getFulfilledShifts(makerId, histOrUpcoming)
-    .catch(err => errorHandler(err, res));
-  return res.status(200).json(shifts);
+app.get('/user/shifts', (req, res) => {
+  const { query } = req;
+  let dbMethod = '';
+  let additionalArgument = '';
+  if (req.user.type === 'werker') {
+    if (query.shifts === 'upcoming' || query.shifts === 'history') {
+      dbMethod = 'getAcceptedShifts';
+      additionalArgument = query.shifts;
+    } else if (query.shifts === 'invite') {
+      dbMethod = 'getInvitedShifts';
+    } else if (query.shifts === 'available') {
+      dbMethod = 'getAvailableShifts';
+    } else {
+      return res.status(400).send('Bad query string');
+    }
+  } else {
+    if (query.shifts === 'upcoming' || query.shifts === 'history') {
+      dbMethod = 'getFulfilledShifts';
+      additionalArgument = query.shifts;
+    } else if (query.shifts === 'apply') {
+      dbMethod = 'getApplicationsForShifts';
+    } else if (query.shifts === 'unfulfilled') {
+      dbMethod = 'getUnfulfilledShifts';
+    } else {
+      return res.status(400).send('Bad query string');
+    }
+  }
+  return dbHelpers[dbMethod](req.user.id, additionalArgument)
+    .then(shifts => res.status(200).json(shifts))
+    .catch(err => errorHandler(err));
 });
 
 // MAKER/WERKER //
