@@ -102,7 +102,7 @@ app.get('/user/shifts', (req, res) => {
     } else {
       return res.status(400).send('Bad query string');
     }
-  } else if (req.user.type === 'werker') {
+  } else if (req.user.type === 'maker') {
     if (query.shifts === 'upcoming' || query.shifts === 'history') {
       dbMethod = dbHelpers.getFulfilledShifts;
       additionalArgument = query.shifts;
