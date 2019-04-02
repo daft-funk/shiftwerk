@@ -27,10 +27,12 @@ shiftWerk is a community shift planning application that connects shift workers 
 - Node 10.15.0
 - PostgreSQL 9.6
 
+## Testing
+- `npm test`
+- to run only individual suites, `npx jest test/<insert file here>`
+
 ## Development
  
-Back-end Files:
-
 - db/index.js - the database configuration
 - server/server.js - the server
 
