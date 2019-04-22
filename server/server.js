@@ -57,7 +57,7 @@ app.get('/user', (req, res) => {
       .then(werker => res.json(200, werker))
       .catch(err => errorHandler(err));
   }
-  return models.Maker.findById(req.user.id)
+  return models.Maker.findByPk(req.user.id)
     .then(maker => res.status(200).json(maker))
     .catch(err => errorHandler(err));
 });
@@ -248,13 +248,21 @@ app.put('/shifts/:shiftId/applications', (req, res) => {
   const { position, werker } = req.query;
   const { id, type } = req.user;
   const appType = type === 'maker' ? 'invite' : 'apply';
-  dbHelpers.applyOrInviteForShift(shiftId, werker || id, position, appType)
+  return dbHelpers.applyOrInviteForShift(shiftId, werker || id, position, appType)
     .then(() => {
-      res.send(201);
+      res.status(201).status('created');
+      if (appType === 'invite') {
+        return models.Werker.findByPk(werker);
+      }
+      return models.Shift.findByPk(shiftId).then(shift => models.Maker.findByPk(shift.MakerId));
     })
+    .then(user => twilio.send(
+      `You've received a shift ${appType === 'invite' ? 'invitation' : 'application'}! Please check ShiftWerk for more details.`,
+      user.phone,
+    ))
     .catch((error) => {
       console.log(error, 'unable to apply');
-      res.status(500).send('unable to apply');
+      return res.status(500).send('unable to apply');
     });
 });
 
