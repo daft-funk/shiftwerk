@@ -455,6 +455,7 @@ const acceptOrDeclineShift = (shiftId, werkerId, status) => db.models.InviteAppl
   returning: true,
 }).then((updated) => {
   const updatedEntry = updated[1][0].dataValues;
+  console.log(updatedEntry);
   if (status === 'decline') {
     return updatedEntry;
   }

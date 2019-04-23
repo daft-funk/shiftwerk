@@ -250,7 +250,7 @@ app.put('/shifts/:shiftId/applications', (req, res) => {
   const appType = type === 'maker' ? 'invite' : 'apply';
   return dbHelpers.applyOrInviteForShift(shiftId, werker || id, position, appType)
     .then(() => {
-      res.status(201).status('created');
+      res.status(201).send('created');
       if (appType === 'invite') {
         return models.Werker.findByPk(werker);
       }
